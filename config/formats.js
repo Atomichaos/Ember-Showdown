@@ -296,9 +296,9 @@ exports.Formats = [
 		banlist: ['Shedinja'],
 		onModifyTemplate: function (template, pokemon) {
 			let temp = Object.assign({}, template);
-			let types = [pokemon.moves[0] === 'hiddenpower' ? pokemon.hpType : this.getMove(pokemon.moves[0]).type];
+			let types = [pokemon.moves[0] === 'hiddenpower' ? 'Normal' : this.getMove(pokemon.moves[0]).type];
 			if (pokemon.moves[1]) {
-				let move2type = pokemon.moves[1] === 'hiddenpower' ? pokemon.hpType : this.getMove(pokemon.moves[1]).type;
+				let move2type = pokemon.moves[1] === 'hiddenpower' ? 'Normal' : this.getMove(pokemon.moves[1]).type;
 				if (move2type !== types[0]) types.push(move2type);
 			}
 			temp.types = types;
@@ -319,6 +319,7 @@ exports.Formats = [
 		],
 
 		mod: 'gen7',
+		searchShow: false,
 		ruleset: ['[Gen 7] OU', 'Inverse Mod'],
 		banlist: ['Hoopa-Unbound', 'Kyurem-Black', 'Serperior'],
 		unbanlist: ['Aegislash', 'Dialga', 'Giratina', 'Lucarionite', 'Solgaleo'],
