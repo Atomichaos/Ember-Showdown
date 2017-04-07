@@ -185,7 +185,7 @@ class ScavengerHunt extends Rooms.RoomGame {
 		number--; // indexOf starts at 0
 
 		this.questions[number][question_answer] = value;
-		this.announce(`The ${question_answer} for question ${number + 1} has been editted.`);
+		this.announce(`The ${question_answer} for question ${number + 1} has been edited.`);
 		if (question_answer === 'hint') {
 			for (let p in this.players) {
 				this.players[p].onNotifyChange(number);
@@ -387,7 +387,7 @@ let commands = {
 		if (!room.game || room.game.gameid !== 'scavengers') return false;
 		let elapsed = Date.now() - room.game.startTime;
 
-		this.sendReplyBox(`The current scavenger hunt has been up for: ${Chat.toDurationString(elapsed, {hhmmss: true})}<br />Completed (${room.game.completed.length}): ${room.game.completed.map(user => Chat.escapeHTML)}`);
+		this.sendReplyBox(`The current scavenger hunt has been up for: ${Chat.toDurationString(elapsed, {hhmmss: true})}<br />Completed (${room.game.completed.length}): ${room.game.completed.map(u => Chat.escapeHTML(u.name)).join(', ')}`);
 	},
 
 	hint: function (target, room, user) {

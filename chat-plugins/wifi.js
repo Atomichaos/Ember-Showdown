@@ -195,7 +195,7 @@ class Giveaway {
 		return `<p style="text-align:center;font-size:14pt;font-weight:bold;margin-bottom:2px;">It's giveaway time!</p>` +
 			`<p style="text-align:center;font-size:7pt;">Giveaway started by ${Chat.escapeHTML(this.host.name)}</p>` +
 			`<table style="margin-left:auto;margin-right:auto;"><tr><td style="text-align:center;width:45%">${this.sprite}<p style="font-weight:bold;">Giver: ${this.giver}</p>${Giveaway.parseText(this.prize)}<br />OT: ${Chat.escapeHTML(this.ot)}, TID: ${this.tid}</td>` +
-			`<td style="text-align:center;width:45%">${rightSide}</td></tr></table><p style="text-align:center;font-size:7pt;font-weight:bold;"><u>Note:</u> Please do not join if you don't have a 3DS and a copy of Pokémon Sun/Moon.</p>`;
+			`<td style="text-align:center;width:45%">${rightSide}</td></tr></table><p style="text-align:center;font-size:7pt;font-weight:bold;"><u>Note:</u> Please do not join if you don't have a 3DS, a copy of Pokémon Sun/Moon, or are currently unable to receive the prize.</p>`;
 	}
 }
 
@@ -407,7 +407,7 @@ class GtsGiveaway {
 		this.giver = giver;
 		this.left = amount;
 		this.summary = summary;
-		this.deposit = deposit;
+		this.deposit = GtsGiveaway.linkify(Chat.escapeHTML(deposit));
 		this.lookfor = lookfor;
 
 		this.sprite = Giveaway.getSprite(this.summary);
@@ -437,7 +437,7 @@ class GtsGiveaway {
 		return `<p style="text-align:center;font-size:14pt;font-weight:bold;margin-bottom:2px;">There is a GTS giveaway going on!</p>` +
 			`<p style="text-align:center;font-size:10pt;margin-top:0px;">Hosted by: ${Chat.escapeHTML(this.giver.name)} | Left: <b>${this.left}</b></p>` +
 			`<table style="margin-left:auto;margin-right:auto;"><tr><td style="text-align:center;width:15%">${this.sprite}</td><td style="text-align:center;width:40%">${Giveaway.parseText(this.summary)}</td>` +
-			Chat.html `<td style="text-align:center;width:35%">To participate, deposit <strong>${this.deposit}</strong> into the GTS and look for <strong>${this.lookfor}</strong></td></tr></table>`;
+			`<td style="text-align:center;width:35%">To participate, deposit <strong>${this.deposit}</strong> into the GTS and look for <strong>${Chat.escapeHTML(this.lookfor)}</strong></td></tr></table>`;
 	}
 
 	updateLeft(number) {
@@ -455,10 +455,29 @@ class GtsGiveaway {
 		} else {
 			this.clearTimer();
 			this.changeUhtml(`<p style="text-align:center;font-size:13pt;font-weight:bold;">The GTS giveaway has finished.</p>`);
-			this.room.modlog(`${this.giver.name} has finished his GTS giveaway for "${this.summary}"`);
+			this.room.modlog(`${this.giver.name} has finished their GTS giveaway for "${this.summary}"`);
 			this.send(`<p style="text-align:center;font-size:13pt;font-weight:bold;">The GTS giveaway for a "${this.summary}" has finished.</p>`);
 		}
 		delete this.room.gtsga;
+	}
+
+	// This currently doesn't match some of the edge cases the other pokemon matching function does account for (such as Type: Null). However, this should never be used as a fodder mon anyway, so I don't see a huge need to implement it.
+	static linkify(text) {
+		let parsed = text.toLowerCase().replace(/é/g, 'e');
+
+		for (let i in Tools.data.Pokedex) {
+			let id = i;
+			if (!Tools.data.Pokedex[i].baseSpecies && (Tools.data.Pokedex[i].species.includes(' '))) {
+				id = toPokemonId(Tools.data.Pokedex[i].species);
+			}
+			let regexp = new RegExp(`\\b${id}\\b`, 'ig');
+			let res = regexp.exec(parsed);
+			if (res) {
+				let num = Tools.data.Pokedex[i].num < 100 ? (Tools.data.Pokedex[i].num < 10 ? `00${Tools.data.Pokedex[i].num}` : `0${Tools.data.Pokedex[i].num}`) : Tools.data.Pokedex[i].num;
+				return `${text.slice(0, res.index)}<a href="http://www.serebii.net/pokedex-sm/location/${num}.shtml">${text.slice(res.index, res.index + res[0].length)}</a>${text.slice(res.index + res[0].length)}`;
+			}
+		}
+		return text;
 	}
 }
 
