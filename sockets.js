@@ -15,6 +15,8 @@
 
 const cluster = require('cluster');
 global.Config = require('./config/config');
+global.DATA_DIR = (process.env.OPENSHIFT_DATA_DIR) ? process.env.OPENSHIFT_DATA_DIR : './config/';
+
 
 if (cluster.isMaster) {
 	cluster.setupMaster({
@@ -107,9 +109,10 @@ if (cluster.isMaster) {
 	};
 
 	exports.killWorker = function (worker) {
+		let idd = worker.id + '-';
 		let count = 0;
-		Users.connections.forEach(connection => {
-			if (connection.worker === worker) {
+		Users.connections.forEach((connection, connectionid) => {
+			if (connectionid.substr(idd.length) === idd) {
 				Users.socketDisconnect(worker, worker.id, connection.socketid);
 				count++;
 			}
@@ -198,8 +201,8 @@ if (cluster.isMaster) {
 	}
 	try {
 		let nodestatic = require('node-static');
-		let cssserver = new nodestatic.Server('./config');
-		let avatarserver = new nodestatic.Server('./config/avatars');
+		let cssserver = new nodestatic.Server(DATA_DIR);
+		let avatarserver = new nodestatic.Server(DATA_DIR + 'avatars');
 		let staticserver = new nodestatic.Server('./static');
 		let staticRequestHandler = (request, response) => {
 			// console.log("static rq: " + request.socket.remoteAddress + ":" + request.socket.remotePort + " -> " + request.socket.localAddress + ":" + request.socket.localPort + " - " + request.method + " " + request.url + " " + request.httpVersion + " - " + request.rawHeaders.join('|'));
