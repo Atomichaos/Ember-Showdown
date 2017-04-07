@@ -45,11 +45,27 @@
 const fs = require('fs');
 const path = require('path');
 
-// Check for dependencies
+/* ----------------Data-Directory------------*/
+global.DATA_DIR = (process.env.OPENSHIFT_DATA_DIR) ? process.env.OPENSHIFT_DATA_DIR : './config/';
+global.LOGS_DIR = (process.env.OPENSHIFT_DATA_DIR) ? (process.env.OPENSHIFT_DATA_DIR + 'logs/') : './logs/';
+global.DB_DIR = (process.env.OPENSHIFT_DATA_DIR) ? process.env.OPENSHIFT_DATA_DIR : './config/db/';
+
+
+/*********************************************************
+ * Make sure we have everything set up correctly
+ *********************************************************/
+
+// Make sure our dependencies are available, and install them if they
+// aren't
+
 try {
 	require.resolve('sockjs');
 } catch (e) {
-	throw new Error("Dependencies unmet; run npm install");
+	if (require.main !== module) throw new Error("Dependencies unmet");
+
+	let command = 'npm install --production';
+	console.log('Installing dependencies: `' + command + '`...');
+	require('child_process').spawnSync('sh', ['-c', command], {stdio: 'inherit'});
 }
 
 /*********************************************************
@@ -68,6 +84,21 @@ try {
 	);
 } finally {
 	global.Config = require('./config/config');
+}
+
+if (!fs.existsSync(DATA_DIR + "avatars/")) {
+	fs.mkdirSync(DATA_DIR + "avatars/");
+}
+
+if (!fs.existsSync(DB_DIR)) {
+	fs.mkdirSync(DB_DIR);
+}
+
+if (!fs.existsSync(LOGS_DIR)) {
+	fs.mkdirSync(LOGS_DIR);
+	fs.mkdirSync(LOGS_DIR + 'chat/');
+	fs.mkdirSync(LOGS_DIR + 'modlog/');
+	fs.mkdirSync(LOGS_DIR + 'repl/');
 }
 
 if (Config.watchconfig) {
@@ -103,6 +134,12 @@ global.Users = require('./users');
 global.Punishments = require('./punishments');
 
 global.Chat = require('./chat');
+
+global.sqlite3 = require('sqlite3');
+
+global.Db = require('origindb')(DB_DIR);
+
+global.EM = {};
 
 global.Rooms = require('./rooms');
 
@@ -165,3 +202,9 @@ TeamValidator.PM.spawn();
  *********************************************************/
 
 require('./repl').start('app', cmd => eval(cmd));
+
+ /*--------- Clans & Wars  & Ligas ---------*/
+ global.Clans = require('./clans.js');
+ global.War = require('./war.js');
+ global.League = require('./league.js');
+ global.Bot = require('./bot.js');
