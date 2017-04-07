@@ -1,5 +1,4 @@
 /config/*
-!/config/formats.js
 /logs/*
 /node_modules
 /eslint-cache
@@ -48,4 +47,3 @@ local_settings.py
 .svn
 
 pip-log.txt
-
