@@ -1,7 +1,5 @@
 'use strict';
 
-const Matchmaker = require('../ladders-matchmaker').matchmaker;
-
 const BRACKET_MINIMUM_UPDATE_INTERVAL = 2 * 1000;
 const AUTO_DISQUALIFY_WARNING_TIMEOUT = 30 * 1000;
 const AUTO_START_MINIMUM_TIMEOUT = 30 * 1000;
@@ -110,7 +108,6 @@ class Tournament {
 			output.errorReply(format.name + " does not support supplementary banlists.");
 			return false;
 		}
-		if (!format.banlistTable) Tools.getBanlistTable(format);
 		let banlist = [];
 		for (let i = 0; i < params.length; i++) {
 			let param = params[i].trim();
@@ -119,28 +116,14 @@ class Tournament {
 				unban = true;
 				param = param.substr(1);
 			}
-			let ban, oppositeBan;
-			let subformat = Tools.getFormat(param);
-			if (subformat.effectType === 'ValidatorRule' || subformat.effectType === 'Format') {
-				if (unban) {
-					if (format.banlistTable['Rule:' + subformat.id] === false) continue;
-				} else {
-					if (format.banlistTable['Rule:' + subformat.id]) continue;
-				}
-				ban = 'Rule:' + subformat.name;
-			} else {
-				let search = Tools.dataSearch(param);
-				if (!search || search.length < 1) continue;
-				search = search[0];
-				if (!search.exactMatch || search.searchType === 'nature') continue;
-				if (unban) {
-					if (format.banlistTable[search.name] === false) continue;
-				} else {
-					if (format.banlistTable[search.name]) continue;
-				}
-				ban = search.name;
-			}
+			let search = Tools.dataSearch(param);
+			if (!search || search.length < 1) continue;
+			search = search[0];
+			if (search.searchType === 'nature') continue;
+			let ban = search.name;
+			let oppositeBan;
 			if (unban) {
+				if (format.unbanlist && format.unbanlist.includes(ban)) continue;
 				oppositeBan = ban;
 				ban = '!' + ban;
 			} else {
@@ -150,7 +133,7 @@ class Tournament {
 			if (index > -1) {
 				banlist.splice(index, 1);
 			} else {
-				banlist.push(ban);
+				if (!format.banlist || !format.banlist.includes(ban)) banlist.push(ban);
 			}
 		}
 		if (banlist.length < 1) {
@@ -159,33 +142,6 @@ class Tournament {
 		}
 		this.banlist = banlist;
 		return true;
-	}
-
-	getBanlist() {
-		let bans = [];
-		let unbans = [];
-		let addedRules = [];
-		let removedRules = [];
-		for (let i = 0; i < this.banlist.length; i++) {
-			let ban = this.banlist[i];
-			let unban = false;
-			if (ban.charAt(0) === '!') {
-				unban = true;
-				ban = ban.substr(1);
-			}
-			if (ban.startsWith('Rule:')) {
-				ban = ban.substr(5);
-				(unban ? removedRules : addedRules).push(ban);
-			} else {
-				(unban ? unbans : bans).push(ban);
-			}
-		}
-		let html = [];
-		if (bans.length) html.push("<b>Bans</b> - " + Chat.escapeHTML(bans.join(", ")));
-		if (unbans.length) html.push("<b>Unbans</b> - " + Chat.escapeHTML(unbans.join(", ")));
-		if (addedRules.length) html.push("<b>Added rules</b> - " + Chat.escapeHTML(addedRules.join(", ")));
-		if (removedRules.length) html.push("<b>Removed rules</b> - " + Chat.escapeHTML(removedRules.join(", ")));
-		return html.join("<br />");
 	}
 
 	forceEnd() {
@@ -529,7 +485,7 @@ class Tournament {
 		this.availableMatches.forEach((availableMatches, user) => {
 			if (oldAvailableMatches.get(user)) return;
 
-			if (availableMatches.size) this.lastActionTimes.set(user, now);
+			if (availableMatches.size && !this.autoDisqualifyWarnings.has(user)) this.lastActionTimes.set(user, now);
 		});
 
 		return {
@@ -821,7 +777,7 @@ class Tournament {
 		let player = this.players[user.userid];
 		if (!this.pendingChallenges.get(player)) return;
 
-		let room = Matchmaker.startBattle(from, user, this.format, challenge.team, user.team, {rated: this.isRated, tour: this});
+		let room = Rooms.global.startBattle(from, user, this.format, challenge.team, user.team, {rated: this.isRated, tour: this});
 		if (!room) return;
 
 		this.pendingChallenges.set(challenge.from, null);
@@ -930,6 +886,41 @@ class Tournament {
 		}));
 		this.isEnded = true;
 		if (this.autoDisqualifyTimer) clearTimeout(this.autoDisqualifyTimer);
+						// Tournament Winnings
+		//
+		let color = '#BB6007';
+		let sizeRequiredToEarn = 2;
+		let currencyName = function (amount) {
+			let name = " PD";
+			return amount === 1 ? name : name + "s";
+		};
+		let data = this.generator.getResults().map(usersToNames).toString();
+		let winner, runnerUp;
+
+		if (data.indexOf(',') >= 0) {
+			data = data.split(',');
+			winner = data[0];
+			if (data[1]) runnerUp = data[1];
+		} else {
+			winner = data;
+		}
+
+		let wid = toId(winner);
+		let rid = toId(runnerUp);
+		let tourSize = this.generator.users.size;
+
+		if (this.room.isOfficial && tourSize >= sizeRequiredToEarn) {
+			let firstMoney = Math.round(tourSize * 20);
+			let secondMoney = Math.round(firstMoney / 2)
+
+			Db('money').set(wid, Db('money').get(wid, 0) + firstMoney);
+			this.room.addRaw("<b><font color='" + EM.Color(winner) + "'>" + Chat.escapeHTML(winner) + "</font> Has won " + "<font color='" + color + "'>" + firstMoney + "</font>" + currencyName(firstMoney) + " for winning the tournament!</b>");
+
+			if (runnerUp) {
+				Db('money').set(rid, Db('money').get(rid, 0) + secondMoney);
+				this.room.addRaw("<b><font color='" + EM.Color(runnerUp) + "'>" + Chat.escapeHTML(runnerUp) + "</font> Has won " +  "<font color='" + color + "'>" + + secondMoney + "</font>" + currencyName(secondMoney) + " for getting second place!</b>");
+			}
+		}
 		delete exports.tournaments[this.room.id];
 		delete this.room.game;
 		for (let i in this.players) {
@@ -1038,13 +1029,12 @@ let commands = {
 		acceptchallenge: function (tournament, user) {
 			tournament.acceptChallenge(user, this);
 		},
-		viewruleset: 'viewbanlist',
 		viewbanlist: function (tournament) {
 			if (!this.runBroadcast()) return;
 			if (tournament.banlist.length < 1) {
 				return this.errorReply("The tournament's banlist is empty.");
 			}
-			this.sendReplyBox("This tournament includes:<br />" + tournament.getBanlist());
+			this.sendReplyBox("<b>This tournament's banlist:</b><br />" + Chat.escapeHTML(tournament.banlist.join(', ')));
 		},
 	},
 	creation: {
@@ -1075,7 +1065,6 @@ let commands = {
 				this.privateModCommand("(" + user.name + " forcibly ended a tournament.)");
 			}
 		},
-		ruleset: 'banlist',
 		banlist: function (tournament, user, params, cmd) {
 			if (params.length < 1) {
 				return this.sendReply("Usage: " + cmd + " <comma-separated arguments>");
@@ -1084,11 +1073,11 @@ let commands = {
 				return this.errorReply("The banlist cannot be changed once the tournament has started.");
 			}
 			if (tournament.setBanlist(params, this)) {
-				this.room.addRaw("<div class='infobox'>This tournament includes:<br />" + tournament.getBanlist() + "</div>");
-				this.privateModCommand("(" + user.name + " set the tournament's banlist to " + tournament.banlist.join(", ") + ".)");
+				const banlist = tournament.banlist.join(', ');
+				this.room.addRaw("<b>The tournament's banlist is now:</b> " + Chat.escapeHTML(banlist) + ".");
+				this.privateModCommand("(" + user.name + " set the tournament's banlist to " + banlist + ".)");
 			}
 		},
-		clearruleset: 'clearbanlist',
 		clearbanlist: function (tournament, user) {
 			if (tournament.isTournamentStarted) {
 				return this.errorReply("The banlist cannot be changed once the tournament has started.");
