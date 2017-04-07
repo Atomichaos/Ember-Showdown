@@ -39,6 +39,25 @@ const BROADCAST_TOKEN = '!';
 
 const fs = require('fs');
 const path = require('path');
+const parseEmoticons = require('./chat-plugins/emoticons').parseEmoticons;
+
+function getServersAds(text) {
+	let aux = text.toLowerCase();
+	let serversAds = [];
+	let spamindex;
+	let actualAd = '';
+	while (aux.indexOf(".psim.us") > -1) {
+		spamindex = aux.indexOf(".psim.us");
+		actualAd = '';
+		for (let i = spamindex - 1; i >= 0; i--) {
+			if (aux.charAt(i).replace(/[^a-z0-9]/g, '') === '') break;
+			actualAd = aux.charAt(i) + actualAd;
+		}
+		if (actualAd.length) serversAds.push(toId(actualAd));
+		aux = aux.substr(spamindex + ".psim.us".length);
+	}
+	return serversAds;
+}
 
 class PatternTester {
 	// This class sounds like a RegExp
@@ -167,18 +186,50 @@ class CommandContext {
 		// Output the message
 
 		if (message && message !== true && typeof message.then !== 'function') {
+				let emoticons = parseEmoticons(message);
+				let oldMessage = message;
 			if (this.pmTarget) {
+				let noEmotes = message;
+				let emoticons = parseEmoticons(message);
+				if(emoticons) {
+					noEmotes = message;
+					message = "/html " + emoticons;
+				}
 				let buf = `|pm|${this.user.getIdentity()}|${this.pmTarget.getIdentity()}|${message}`;
 				this.user.send(buf);
-				if (this.pmTarget !== this.user) this.pmTarget.send(buf);
-
+				if (Users.ShadowBan.checkBanned(this.user)) {
+					Users.ShadowBan.addMessage(this.user, "Mensaje privado a " + this.pmTarget.getIdentity(), noEmotes);
+				} else {
+					if (this.pmTarget !== this.user) this.pmTarget.send(buf);
+				}
 				this.pmTarget.lastPM = this.user.userid;
 				this.user.lastPM = this.pmTarget.userid;
-			} else {
-				this.room.add(`|c|${this.user.getIdentity(this.room.id)}|${message}`);
+		} else {
+				let emoticons = parseEmoticons(message);
+				if(emoticons && !this.room.disableEmoticons) {
+					if (Users.ShadowBan.checkBanned(this.user)) {
+						Users.ShadowBan.addMessage(this.user,this.room.id, message);
+						this.room.update();
+						return false;
+					}
+					for (let u in this.room.users) {
+						let curUser = Users(u);
+						if (!curUser || !curUser.connected) continue;
+						curUser.sendTo(this.room, (this.room.type === 'chat' ? '|c:|' + (~~(Date.now() / 1000)) + '|' : '|c|') + this.user.getIdentity(this.room.id) + '|/html ' + emoticons);
+					}
+					this.room.messageCount++;
+				} else {
+					if (Users.ShadowBan.checkBanned(this.user)) {
+						Users.ShadowBan.addMessage(this.user, "To " + this.room.id, message);
+						this.user.sendTo(this.room, (this.room.type === 'chat' ? '|c:|' + (~~(Date.now() / 1000)) + '|' : '|c|') + this.user.getIdentity(this.room.id) + '|' + message);
+					} else {
+						this.room.add((this.room.type === 'chat' ? (this.room.type === 'chat' ? '|c:|' + (~~(Date.now() / 1000)) + '|' : '|c|') : '|c|') + this.user.getIdentity(this.room.id) + '|' + message);
+						this.room.messageCount++;
+					}
+				}
+				//this.room.add(`|c|${this.user.getIdentity(this.room.id)}|${message}`);
 			}
 		}
-
 		this.update();
 
 		return message;
@@ -368,7 +419,7 @@ class CommandContext {
 		}).join('\n');
 	}
 	sendReply(data) {
-		if (this.broadcasting) {
+		if (this.broadcasting && !Users.ShadowBan.checkBanned(this.user)) {
 			// broadcasting
 			if (this.pmTarget) {
 				data = this.pmTransform(data);
@@ -498,10 +549,13 @@ class CommandContext {
 			if (!this.canBroadcast(suppressMessage)) return false;
 		}
 
-		if (this.pmTarget) {
-			this.add('|c~|' + (suppressMessage || this.message));
+		let msg = '|c|' + this.user.getIdentity(this.room.id) + '|' + (suppressMessage || this.message);
+		if (this.pmTarget) msg = '|c~|' + (suppressMessage || this.message);
+		if (Users.ShadowBan.checkBanned(this.user)) {
+			this.sendReply(msg);
+			Users.ShadowBan.addMessage(this.user, (this.pmTarget ? "Private to " + this.pmTarget.getIdentity() : "To " + this.room.id), (suppressMessage || this.message));
 		} else {
-			this.add('|c|' + this.user.getIdentity(this.room.id) + '|' + (suppressMessage || this.message));
+			this.add(msg);
 		}
 		if (!this.pmTarget) {
 			this.room.lastBroadcast = this.broadcastMessage;
@@ -608,10 +662,6 @@ class CommandContext {
 				return false;
 			}
 
-			if (!this.checkBanwords(room, user.name)) {
-				this.errorReply(`Your username contains a phrase banned by this room.`);
-				return false;
-			}
 			if (!this.checkBanwords(room, message) && !user.can('mute', null, room)) {
 				this.errorReply("Your message contained banned words.");
 				return false;
@@ -631,6 +681,33 @@ class CommandContext {
 			if (Config.chatfilter) {
 				return Config.chatfilter.call(this, message, user, room, connection, targetUser);
 			}
+			
+			//servers Spam
+			if (!user.can('bypassall') && Rooms('staff')) {
+				let serverexceptions = {'lightning': 1, 'showdown': 1, 'smogtours': 1};
+				if (Config.serverexceptions) {
+					for (var i in Config.serverexceptions) serverexceptions[i] = 1;
+				}
+				let serverAd = getServersAds(message);
+				if (message.indexOf('pandorashowdown.net', 'c9users.io', 'rhcloud.com', 'herokuapp.com') >= 0) serverAd.push('pandora');
+				if (serverAd.length) {
+					for (var i = 0; i < serverAd.length; i++) {
+						if (!serverexceptions[serverAd[i]]) {
+							if (!room && targetUser) {
+								connection.send('|pm|' + user.getIdentity() + '|' + targetUser.getIdentity() + '|' + message);
+								Rooms('staff').add('|c|' + user.getIdentity() + '|(__PM a ' + targetUser.getIdentity() + '__) -- ' + message);
+								Rooms('staff').update();
+							} else if (room) {
+								connection.sendTo(room, '|c|' + user.getIdentity(room.id) + '|' + message);
+								Rooms('staff').add('|c|' + user.getIdentity(room.id) + '|(__' + room.id + '__) -- ' + message);
+								Rooms('staff').update();
+							}
+							return false;
+						}
+					}
+				}
+			}
+
 			return message;
 		}
 
@@ -714,7 +791,7 @@ class CommandContext {
 		}
 
 		// check for mismatched tags
-		let tags = html.toLowerCase().match(/<\/?(div|a|button|b|strong|em|i|u|center|font|marquee|blink|details|summary|code|table|td|tr)\b/g);
+		let tags = html.toLowerCase().match(/<\/?(div|a|button|b|strong|em|i|u|center|font|marquee|blink|details|summary|code)\b/g);
 		if (tags) {
 			let stack = [];
 			for (let i = 0; i < tags.length; i++) {
@@ -779,7 +856,7 @@ Chat.CommandContext = CommandContext;
  * Usage:
  *   Chat.parse(message, room, user, connection)
  *
- * Parses the message. If it's a command, the command is executed, if
+ * Parses the message. If it's a command, the commnad is executed, if
  * not, it's displayed directly in the room.
  *
  * Examples:
