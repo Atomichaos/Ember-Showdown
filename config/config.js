@@ -214,7 +214,7 @@ exports.replsocketmode = 0o600;
 exports.github = {
 	secret: "", // Your repo secret
 	port: "", // Desired port, must be unused and above 1000
-	rooms: [''], // Desired rooms
+	rooms: ['development'], // Desired rooms
 };
 
 // permissions and groups:
