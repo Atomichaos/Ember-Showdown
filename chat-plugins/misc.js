@@ -191,7 +191,6 @@ const messages = [
 					"<u>Major Contributors:</u><br />" +
 					"- " + EM.nameColor('DeltaSkiez', true) + " (Owner, Sysadmin, Server CSS)<br />" +
                  			"- " + EM.nameColor('HurriKaine', true) + " (Owner, Sysadmin, Lead Policy)<br />" +
-                    			"- " + EM.nameColor('Revival Viosmic', true) + " (Admin, Discord Manager)<br />" +
 					"<br />" +
 					"<u>Staff Contributions:</u><br />" +
 					"- " + EM.nameColor('Blooded Kitten', true) + " (Server Website Manager)<br />" +
