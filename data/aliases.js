@@ -38,6 +38,10 @@ exports.BattleAliases = {
 	"gen6inverse": "Inverse Battle",
 	"camomons": "[Gen 7] Camomons",
 	"inverse": "[Gen 7] Inverse",
+	"embermonotype": "[Gen 7] Ember Monotype",
+	"perseverance": "[Gen 7] Perseverance",
+	"pmd": "[Gen 7] Pokemon Mystery Dungeon",
+	"ssb": "[Gen 7] Super Staff Bros",
 
 	// mega evos
 	"maero": "Aerodactyl-Mega",
