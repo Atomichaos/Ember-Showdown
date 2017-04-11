@@ -435,9 +435,9 @@ staff: 'authlist',
 
 		let targets = target.split(',');
 		if (targets.length !== 2) {
-			room.add('|raw|<center><img src="' + Chat.escapeHTML(targets[0]) + '" alt="" width="50%"/><br /><small><em>(Image showed by: <b><font color="' + EM.Color(user.name) + '">' + user.name +  '</font></em></b>)</small>');
+			room.add('|raw|<center><img src="' + Chat.escapeHTML(targets[0]) + '" alt="" width="50%"/><br /><small><em>(Image shown by: <b><font color="' + EM.Color(user.name) + '">' + user.name +  '</font></em></b>)</small>');
 		} else {
-			room.add('|raw|<center><img src="' + Chat.escapeHTML(targets[0]) + '" alt="" width="' + toId(targets[1]) + '%"/><br /><small><em>(Image showed by: <b><font color="' + EM.Color(user.name) + '">' + user.name +  '</font></em></b>)</small>');
+			room.add('|raw|<center><img src="' + Chat.escapeHTML(targets[0]) + '" alt="" width="' + toId(targets[1]) + '%"/><br /><small><em>(Image shown by: <b><font color="' + EM.Color(user.name) + '">' + user.name +  '</font></em></b>)</small>');
 		}
 	},
 	
@@ -445,8 +445,8 @@ staff: 'authlist',
 		if (!user.hasConsoleAccess(connection)) {return this.sendReply("/cssedit - Access denied.");}
 		var fsscript = require('fs');
 		if (!target) {
-			if (!fsscript.existsSync(DATA_DIR + "custom.css")) return this.sendReply("custom.css does not exist.");
-			return this.sendReplyBox(fsscript.readFileSync(DATA_DIR + "custom.css").toString());
+			if (!fsscript.existsSync(DATA_DIR + "custom.css")) return this.sendReply("custom.css no existe.");
+			return this.sendReply("|raw|<div class=\"infobox\"><div class=\"infobox-limited\">" + fsscript.readFileSync(DATA_DIR + "custom.css").toString() + "</div></div>");
 		}
 		fsscript.writeFileSync(DATA_DIR + "custom.css", target.toString());
 		this.sendReply("custom.css successfully edited.");
