@@ -308,7 +308,7 @@ staff: 'authlist',
 				}
 			}
 			connection.popup('|html|' +
-				'<h3><center>Ember Server Authority</center></h3>' +
+				'<h3>Ember Server Authority</h3>' +
 				'<b><u>~Administrators' +  ' (' + staff['admins'].length + ')</u></b>:<br />' + staff['admins'].join(', ') +
 				'<br /><b><u>&Leaders' +  ' (' + staff['leaders'].length + ')</u></b>:<br />' + staff['leaders'].join(', ') +
 				'<br /><b><u>*Bots (' + staff['bots'].length + ')</u></b>:<br />' + staff['bots'].join(', ') +
