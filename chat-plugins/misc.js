@@ -445,7 +445,7 @@ staff: 'authlist',
 		if (!user.hasConsoleAccess(connection)) {return this.sendReply("/cssedit - Access denied.");}
 		var fsscript = require('fs');
 		if (!target) {
-			if (!fsscript.existsSync(DATA_DIR + "custom.css")) return this.sendReply("custom.css no existe.");
+			if (!fsscript.existsSync(DATA_DIR + "custom.css")) return this.sendReply("custom.css does not exist.");
 			return this.sendReply("|raw|<div class=\"infobox\"><div class=\"infobox-limited\">" + fsscript.readFileSync(DATA_DIR + "custom.css").toString() + "</div></div>");
 		}
 		fsscript.writeFileSync(DATA_DIR + "custom.css", target.toString());
