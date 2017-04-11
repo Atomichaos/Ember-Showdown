@@ -213,7 +213,7 @@ exports.replsocketmode = 0o600;
 //github repo config
 exports.github = {
 	secret: "", // Your repo secret
-	port: "", // Desired port, must be unused and above 1000
+	port: "8082", // Desired port, must be unused and above 1000
 	rooms: ['development'], // Desired rooms
 };
 
