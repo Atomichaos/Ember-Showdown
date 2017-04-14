@@ -63,18 +63,18 @@ let shopDisplay = getShopDisplay(shop);
  * @return {String} display
  */
 function getShopDisplay(shop) {
-	let display = "<center><img src=http://i.imgur.com/8KX56s2.gif><img src=http://i.imgur.com/tXlUyas.png width=250> <img src=http://i.imgur.com/bKJYns1.gif></center><br><div' + (!this.isOfficial ? ' class=infobox-limited' : '') + '><table style='background: #000; border-color: #DF0101; border-radius: 8px' border='1' cellspacing='0' cellpadding='5' width='100%'>" +
-		"<tbody><tr><th><font color=#DF0101 face=courier>Item</font></th><th><font color=#DF0101 face=courier>Description</font></th><th><font color=#DF0101 face=courier>Price</font></th></tr>";
+	let display = "<center><img src=http://i.imgur.com/8KX56s2.gif><img src=http://i.imgur.com/tXlUyas.png width=250> <img src=http://i.imgur.com/bKJYns1.gif></center><br><div' + (!this.isOfficial ? ' class=infobox-limited' : '') + '><table style='background: #000; border-color: #01D0DF; border-radius: 8px' border='1' cellspacing='0' cellpadding='5' width='100%'>" +
+		"<tbody><tr><th><font color=#01D0DF face=courier>Item</font></th><th><font color=#01D0DF face=courier>Description</font></th><th><font color=#01D0DF face=courier>Price</font></th></tr>";
 	let start = 0;
 	while (start < shop.length) {
 		display += "<tr>" +
-			"<td align='center'><button name='send' style='background: #000; border-radius: 5px; border: solid, 1px, #DF0101; font-size: 11px; padding: 5px 10px' value='/buy " + shop[start][0] + "'><font color=#DF0101 face=courier><b>" + shop[start][0] + "</b></font></button>" + "</td>" +
-			"<td align='center'><font color=#DF0101 face=courier>" + shop[start][1] + "</font></td>" +
-			"<td align='center'><font color=#DF0101 face=courier>" + shop[start][2] + "</font></td>" +
+			"<td align='center'><button name='send' style='background: #000; border-radius: 5px; border: solid, 1px, #01D0DF; font-size: 11px; padding: 5px 10px' value='/buy " + shop[start][0] + "'><font color=#01D0DF face=courier><b>" + shop[start][0] + "</b></font></button>" + "</td>" +
+			"<td align='center'><font color=#01D0DF face=courier>" + shop[start][1] + "</font></td>" +
+			"<td align='center'><font color=#01D0DF face=courier>" + shop[start][2] + "</font></td>" +
 			"</tr>";
 		start++;
 	}
-	display += "</tbody></table></div><br><center><font color=#000 face=courier>To buy an item from the shop, use /buy <em>Item</em>.</font></center>";
+	display += "</tbody></table></div><br><center><font color=#000 face=courier>To buy an item from the shop, use /buy <em>Item</em>. If you have any questions please contact an admin or global staff member.</font></center>";
 	return display;
 }
 
