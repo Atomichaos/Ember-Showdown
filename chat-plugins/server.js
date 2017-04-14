@@ -1,5 +1,8 @@
 'use strict';
 
+let moment = require('moment');
+let request = require('request');
+
 function clearRoom(room) {
 	let len = (room.log && room.log.length) || 0;
 	let users = [];
@@ -87,6 +90,19 @@ exports.commands = {
 		});
 	},
 	pmallstaffhelp: ["/pmallstaff [message]"],
+	
+	seen: function (target, room, user) {
+		if (!this.runBroadcast()) return;
+		if (!target) return this.parse('/help seen');
+		let targetUser = Users.get(target);
+		if (targetUser && targetUser.connected) return this.sendReplyBox('<b><font color="' + color(toId(targetUser.name)) + '">' + targetUser.name + '</font></b> is <b>currently online</b>.');
+		//if (targetUser.userid === 'username') return false;
+		target = Chat.escapeHTML(target);
+		let seen = Db('seen').get(toId(target));
+		if (!seen) return this.sendReplyBox('<b><font color="' + color(toId(target)) + '">' + target + '</b> has never been online on this server.');
+		this.sendReplyBox('<b><font color="' + color(toId(target)) + '">' + target + '</font></b> was last seen <b>' + moment(seen).fromNow() + '</b>.');
+	},
+	seenhelp: ["/seen - Shows when the user last connected on the server."],
 	
 	showauth: 'hideauth',
 	show: 'hideauth',
