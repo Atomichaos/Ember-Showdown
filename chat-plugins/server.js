@@ -1,8 +1,5 @@
 'use strict';
 
-let moment = require('moment');
-let request = require('request');
-
 function clearRoom(room) {
 	let len = (room.log && room.log.length) || 0;
 	let users = [];
@@ -95,25 +92,17 @@ exports.commands = {
 		if (!this.runBroadcast()) return;
 		if (!target) return this.parse('/help seen');
 		let targetUser = Users.get(target);
-		if (targetUser && targetUser.connected) return this.sendReplyBox('<b><font color="' + color(toId(targetUser.name)) + '">' + targetUser.name + '</font></b> is <b>currently online</b>.');
-		//if (targetUser.userid === 'username') return false;
+		if (targetUser && targetUser.connected) return this.sendReplyBox(EM.nameColor(targetUser.name, true) + " is <b><font color='limegreen'>Currently Online</b></font>.");
 		target = Chat.escapeHTML(target);
-		let seen = Db('seen').get(toId(target));
-		if (!seen) return this.sendReplyBox('<b><font color="' + color(toId(target)) + '">' + target + '</b> has never been online on this server.');
-		this.sendReplyBox('<b><font color="' + color(toId(target)) + '">' + target + '</font></b> was last seen <b>' + moment(seen).fromNow() + '</b>.');
+		let seen = Db.seen.get(toId(target));
+		if (!seen) return this.sendReplyBox(EM.nameColor(target, true) + " has <b><font color='red'>never been online</font></b> on this server.");
+		this.sendReplyBox(EM.nameColor(target, true) + " was last seen <b>" + Chat.toDurationString(Date.now() - seen, {precision: true}) + "</b> ago.");
 	},
 	seenhelp: ["/seen - Shows when the user last connected on the server."],
 	
-	showauth: 'hideauth',
-	show: 'hideauth',
 	hide: 'hideauth',
-	hideauth: function (target, room, user, connection, cmd) {
-		if (!user.can('lock')) return this.sendReply("/hideauth - access denied.");
-		if (cmd === 'show' || cmd === 'showauth') {
-			delete user.hideauth;
-			user.updateIdentity();
-			return this.sendReply("You have revealed your auth symbol.");
-		}
+	hideauth: function (target, room, user) {
+		if (!user.can('lock')) return this.sendReply("/hideauth - Access Denied.");
 		let tar = ' ';
 		if (target) {
 			target = target.trim();
@@ -127,10 +116,20 @@ exports.commands = {
 				this.sendReply('You have tried to use an invalid character as your auth symbol. Defaulting to \' \' instead.');
 			}
 		}
-		user.hideauth = tar;
+		user.customSymbol = tar;
 		user.updateIdentity();
 		this.sendReply('You are now hiding your auth symbol as \'' + tar + '\'.');
-		this.logModCommand(user.name + ' is hiding auth symbol as \'' + tar + '\'');
 	},
+	hidehelp: ["/hide - Hides user's global rank. Requires: & ~"],
+
+	show: 'showauth',
+	showauth: function (target, room, user) {
+		if (!user.can('lock')) return this.sendReply("/showauth - Access Denied.");
+		user.customSymbol = false;
+		user.updateIdentity();
+		this.sendReply("You have now revealed your auth symbol.");
+		this.sendReply("Your symbol has been reset.");
+	},
+	showhelp: ["/show - Displays user's global rank. Requires: & ~"],
 
 };
