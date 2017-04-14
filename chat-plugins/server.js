@@ -115,5 +115,6 @@ exports.commands = {
 		user.updateIdentity();
 		this.sendReply('You are now hiding your auth symbol as \'' + tar + '\'.');
 		this.logModCommand(user.name + ' is hiding auth symbol as \'' + tar + '\'');
-	},	
+	},
+
 };
