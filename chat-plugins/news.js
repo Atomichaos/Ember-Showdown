@@ -10,7 +10,7 @@ function generateNews(user) {
 	user = toId(user);
 	Db('news').keys().forEach(announcement => {
 		newsData = Db('news').get(announcement);
-		newsDisplay.push(`<h4>${announcement}</h4>${newsData[1]}<br /><br />—${Exiled.nameColor(newsData[0], true)} <small>on ${newsData[2]}</small>`);
+		newsDisplay.push(`<h4>${announcement}</h4>${newsData[1]}<br /><br />—${EM.nameColor(newsData[0], true)} <small>on ${newsData[2]}</small>`);
 	});
 	return newsDisplay;
 }
