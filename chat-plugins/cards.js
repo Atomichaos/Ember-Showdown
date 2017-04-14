@@ -68,7 +68,7 @@ function cacheRarity() {
 	}
 }
 
-Exiled.tourCard = function (tourSize, userid) {
+EM.tourCard = function (tourSize, userid) {
 	if (tourSize > 32) tourSize = 32;
 	let tourRarity = tourCardRarity[Math.floor(tourSize / 2)];
 	let cacheValue = rareCache[cleanCard.indexOf(toId(tourRarity))];
@@ -292,11 +292,11 @@ exports.commands = {
 		let userid = user.userid;
 		if (target) userid = toId(target);
 		const cards = Db('cards').get(userid, []);
-		if (!cards.length || userid === "constructor") return this.sendReplyBox(Exiled.nameColor(userid, false) + " has no cards.");
+		if (!cards.length || userid === "constructor") return this.sendReplyBox(EM.nameColor(userid, false) + " has no cards.");
 		const cardsMapping = cards.map(function (card) {
 			return '<button name="send" value="/card ' + card.title + '" style="border-radius: 12px; box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.2) inset;" class="card-button"><img src="' + card.card + '" width="80" title="' + card.name + '"></button>';
 		});
-		this.sendReplyBox('<div style="max-height: 300px; overflow-y: scroll;">' + cardsMapping.join('') + '</div><br><center><b>' + Exiled.nameColor(userid, false) + ' has ' + cards.length + ' cards and ' + getPointTotal(userid) + ' points.</b></center>');
+		this.sendReplyBox('<div style="max-height: 300px; overflow-y: scroll;">' + cardsMapping.join('') + '</div><br><center><b>' + EM.nameColor(userid, false) + ' has ' + cards.length + ' cards and ' + getPointTotal(userid) + ' points.</b></center>');
 	},
 
 	card: function (target, room, user) {
@@ -563,8 +563,8 @@ exports.commands = {
 
 		// send messages
 		this.sendReply("Your trade has been taken submitted.");
-		if (Users.get(targetUser)) Users.get(targetUser).send("|pm|~Card Shop [Do not Reply]|" + targetUser + "|/raw <div class=\"broadcast-green\">" + Exiled.nameColor(user.name, true) + " has initiated a trade with you.  Click <button name=\"send\" value=\"/trades last\">here</button> or use <b>/trades</b> to view your pending trade requests.</div>");
-		user.send("|pm|~Card Shop [Do not Reply]|" + user.userid + "|/raw <div class=\"broadcast-green\">Your trade with " + Exiled.nameColor(targetUser, true) + " has been initiated.  Click <button name=\"send\" value=\"/trades last\">here</button> or use <b>/trades</b> to view your pending trade requests.</div>");
+		if (Users.get(targetUser)) Users.get(targetUser).send("|pm|~Card Shop [Do not Reply]|" + targetUser + "|/raw <div class=\"broadcast-green\">" + EM.nameColor(user.name, true) + " has initiated a trade with you.  Click <button name=\"send\" value=\"/trades last\">here</button> or use <b>/trades</b> to view your pending trade requests.</div>");
+		user.send("|pm|~Card Shop [Do not Reply]|" + user.userid + "|/raw <div class=\"broadcast-green\">Your trade with " + EM.nameColor(targetUser, true) + " has been initiated.  Click <button name=\"send\" value=\"/trades last\">here</button> or use <b>/trades</b> to view your pending trade requests.</div>");
 	},
 
 	trades: 'viewcardtrades',
@@ -612,7 +612,7 @@ exports.commands = {
 		let cardImage = '<img src="' + card.card + '" height=250>';
 		// rarity display
 		let cardRarityPoints = '(<font color="' + colors[card.rarity] + '">' + card.rarity + '</font> - ' + card.points + ')<br />';
-		let userSideDisplay = '<center>' + Exiled.nameColor(user.userid, true) + '<br />' + cardImage + "<br />" + cardRarityPoints + '</center>';
+		let userSideDisplay = '<center>' + EM.nameColor(user.userid, true) + '<br />' + cardImage + "<br />" + cardRarityPoints + '</center>';
 
 		// now build the target's side
 		card = cards[(displayTrade.from !== user.userid ? displayTrade.fromExchange : displayTrade.toExchange)];
@@ -620,7 +620,7 @@ exports.commands = {
 		cardImage = '<img src="' + card.card + '" height=250>';
 		// rarity display
 		cardRarityPoints = '(<font color="' + colors[card.rarity] + '">' + card.rarity + '</font> - ' + card.points + ')<br />';
-		let targetSideDisplay = "<center>" + (displayTrade.from !== user.userid ? Exiled.nameColor(displayTrade.from, true) : Exiled.nameColor(displayTrade.to, true)) + '<br />' + cardImage + "<br />" + cardRarityPoints + "</center>";
+		let targetSideDisplay = "<center>" + (displayTrade.from !== user.userid ? EM.nameColor(displayTrade.from, true) : EM.nameColor(displayTrade.to, true)) + '<br />' + cardImage + "<br />" + cardRarityPoints + "</center>";
 
 		// now build the entire popup
 		let tradeScreen = popup + // base popup
@@ -755,11 +755,11 @@ exports.commands = {
 			// and a button to view the card they just received
 			let targetUsers = [Users.get(trade.to), Users.get(trade.from)];
 			if (targetUsers[0]) {
-				targetUsers[0].popup("|html|" + backButton + "<center>Your trade with " + Exiled.nameColor(trade.from, true) + " has gone through." +
+				targetUsers[0].popup("|html|" + backButton + "<center>Your trade with " + EM.nameColor(trade.from, true) + " has gone through." +
 				"<br /><button name=\"send\" value=\"/cs card, " + trade.fromExchange + "\">View Traded Card</button></center>"); // show card
 			}
 			if (targetUsers[1]) {
-				targetUsers[1].popup("|html|<center>Your trade with " + Exiled.nameColor(trade.to, true) + " has gone through." +
+				targetUsers[1].popup("|html|<center>Your trade with " + EM.nameColor(trade.to, true) + " has gone through." +
 				"<br /><button name=\"send\" value=\"/cs card, " + trade.toExchange + "\">View Traded Card</button></center>");
 			}
 
