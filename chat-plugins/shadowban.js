@@ -171,7 +171,7 @@ exports.commands = {
 		if (!this.can('lock', this.targetUser)) return;
 		var targets = addUser(this.targetUser);
 		if (targets.length === 0) {
-			return this.sendReply('||' + this.targetUsername + " was already in the spamroom");
+			return this.sendReply('||' + this.targetUsername + " was already in the Shadow Ban Room.");
 		}
 		this.privateModCommand("(" + user.name + " has shadow banned: " + targets.join(", ") + (reason ? " (" + reason + ")" : "") + ")");
 
@@ -197,7 +197,7 @@ exports.commands = {
 		for (let key in data) {
 			result.push(key);
 		}
-		this.sendReply('|raw|<div class="infobox">Users in the Spam Room:<br><b>' + result.join(', ') + '</b></div>');
+		this.sendReply('|raw|<div class="infobox">Users in the Shadow Ban Room:<br><b>' + result.join(', ') + '</b></div>');
 	},
 	    yt: function(target, room, user) {
        	if (!this.runBroadcast()) return false;
