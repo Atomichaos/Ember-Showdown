@@ -136,8 +136,7 @@ const messages = [
 		if (!this.canTalk()) return this.errorReply("You cannot do this while unable to talk.");
 		if (Users.ShadowBan.checkBanned(user)) return;
 		target = this.splitTarget(target);
-		if (this.targetUsername === 'embernews') return this.errorReply("These are the server news.");
-		if (this.targetUsername === 'unreadmessages') return this.errorReply("These are the servers news system.");
+		if (this.targetUsername === 'unreadmessages') return this.errorReply("This is the server offline chat system.");
 		let targetUser = this.targetUsername;
 		let id = toId(targetUser);
 		if (id === user.userid || (Users(id) && Users(id).userid === user.userid)) return this.sendReply('You can\'t send a message to yourself!');
