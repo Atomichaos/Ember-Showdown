@@ -240,7 +240,7 @@ exports.commands = {
 			addCard(user.userid, card);
 			let cardName = cards[card].name;
 			let packName = packShop[cleanShop.indexOf(toId(target))];
-			this.sendReplyBox(Exiled.nameColor(user.name, true) + ' got <font color="' + colors[cards[card].rarity] + '">' + cards[card].rarity + '</font> ' +
+			this.sendReplyBox(EM.nameColor(user.name, true) + ' got <font color="' + colors[cards[card].rarity] + '">' + cards[card].rarity + '</font> ' +
 			'<button name="send" value="/card ' + card + '"><b>' + cardName + '</b></button> from a ' +
 			'<button name="send" value="/buypack ' + packName + '">' + packName + ' Pack</button>.');
 		}
