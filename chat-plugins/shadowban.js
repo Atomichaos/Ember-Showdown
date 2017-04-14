@@ -1,4 +1,4 @@
-const ROOM_NAME = "Spam Room";
+const ROOM_NAME = "Shadow Ban Room";
 var room = Rooms.get(toId(ROOM_NAME));
 if (!room) {
 	Rooms.global.addChatRoom(ROOM_NAME);
@@ -20,7 +20,7 @@ if (!room) {
 }
 if (Object.keys(room.addedUsers) > 0) {
 	setImmediate(function () {
-		room.add("||Users added to the Spamroom: " + Object.keys(room.addedUsers).sort().join(", "));
+		room.add("||Users added to the Shadow Ban Room: " + Object.keys(room.addedUsers).sort().join(", "));
 		room.update();
 	});
 }
@@ -181,7 +181,7 @@ exports.commands = {
 	unspam: function (target, room, user) {
 		if (!this.can('lock')) return false;
 		this.splitTarget(target);
-		var Equestria = Rooms('Spam Room') ? Rooms('Spam Room') : false;
+		var Equestria = Rooms('Shadow Ban Room') ? Rooms('Shadown Ban Room') : false;
 		var targets = removeUser(this.targetUser || this.targetUsername);
 		if (targets.length === 0) {
 			return this.sendReply('||' + this.targetUsername + " is not in the spamroom.");
