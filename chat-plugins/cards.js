@@ -317,7 +317,7 @@ exports.commands = {
 	cardladder: function (target, room, user) {
 		if (!this.runBroadcast()) return;
 		let keys = Object.keys(Db('points').object()).map(function (name) {
-			return {name: Exiled.nameColor(name, false), points: getPointTotal(name)};
+			return {name: EM.nameColor(name, false), points: getPointTotal(name)};
 		});
 		if (!keys.length) return this.sendReplyBox("Card ladder is empty.");
 		keys.sort(function (a, b) { return b.points - a.points; });
