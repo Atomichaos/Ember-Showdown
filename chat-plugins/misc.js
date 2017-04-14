@@ -22,6 +22,27 @@ function isHoster(user) {
 	if (hoster === 1) return true;
 	return false;
 }
+function generateNews () {
+			let lobby = Rooms('lobby');
+			if (!lobby) return false;
+			if (!lobby.news || Object.keys(lobby.news).length < 0) return false;
+			if (!lobby.news) lobby.news = {};
+			let news = lobby.news, newsDisplay = [];
+			Object.keys(news).forEach(announcement => {
+				newsDisplay.push(`<h4>${announcement}</h4>${news[announcement].desc}<br /><br /><strong>—<font color="${EM.Color(news[announcement].by)}">${news[announcement].by}</font></strong> on ${moment(news[announcement].posted).format("MMM D, YYYY")}`);
+			});
+			return newsDisplay;
+		}
+function newsDisplay(user) {
+			if (!Users(user)) return false;
+			let newsDis = this.generateNews();
+			if (newsDis.length === 0) return false;
+
+			if (newsDis.length > 0) {
+				newsDis = newsDis.join('<hr>');
+				return Users(user).send(`|pm| News|${Users(user).getIdentity()}|/raw ${newsDis}`);
+			}
+}
 EM.getTells = function(target, room, user, connection) {
 		target = Users.get(target);
 		let tell = EM.tells[target.userid];
@@ -46,7 +67,56 @@ const messages = [
     "kicked his modem in error",
 ];
  exports.commands = {
-	 hoster: {
+	news: 'serverannouncements',
+	announcements: 'serverannouncements',
+	serverannouncements: {
+		'': 'view',
+		display: 'view',
+		view: function (target, room, user) {
+			if (!Rooms('lobby') || !Rooms('lobby').news) return this.errorReply("Strange, there are no server announcements...");
+			if (!Rooms('lobby').news && Rooms('lobby')) Rooms('lobby').news = {};
+			let news = Rooms('lobby').news;
+			if (Object.keys(news).length === 0) return this.sendReply("There are currently no new server announcements at this time.");
+			return user.send('|popup||wide||html|' +
+				"<center><strong>Ember Server News:</strong></center>" +
+					generateNews().join('<hr>')
+			);
+		},
+		delete: function (target, room, user) {
+			if (!this.can('ban')) return false;
+			if (!target) return this.parse('/help serverannouncements');
+			if (!Rooms('lobby').news) Rooms('lobby').news = {};
+			let news = Rooms('lobby').news;
+			if (!news[target]) return this.errorReply("This announcement doesn't seem to exist...");
+			delete news[target];
+			Rooms('lobby').news = news;
+			Rooms('lobby').chatRoomData.news = Rooms('lobby').news;
+			Rooms.global.writeChatRoomData();
+			this.privateModCommand(`(${user.name} deleted server announcement titled: ${target}.)`);
+		},
+		add: function (target, room, user) {
+			if (!this.can('ban')) return false;
+			if (!target) return this.parse('/help serverannouncements');
+			target = target.split('|');
+			for (let u in target) target[u] = target[u].trim();
+			if (!target[1]) return this.errorReply("Usage: /news add [title]| [desc]");
+			if (!Rooms('lobby').news) Rooms('lobby').news = {};
+			let news = Rooms('lobby').news;
+			news[target[0]] = {
+				desc: target[1],
+				posted: Date.now(),
+				by: user.name,
+			};
+			Rooms('lobby').news = news;
+			Rooms('lobby').chatRoomData.news = Rooms('lobby').news;
+			Rooms.global.writeChatRoomData();
+			this.privateModCommand(`(${user.name} added server announcement: ${target[1]})`);
+		},
+	},
+	serverannouncementshelp: ["/announcements view - Views current server announcements.",
+		"/announcements delete [announcement title] - Deletes announcement with the [title]. Requires @, &, ~",
+		"/announcements add [announcement title]| [announcement desc] - Adds announcement [announcement]. Requires @, &, ~"],
+		        hoster: {
         	add: function (target, room, user, userid) {
 			if (!this.userid == 'deltaskiez') return this.errorReply('This command can only be used by DeltaSkiez');
 			let hoster = toId(target);
@@ -136,6 +206,7 @@ const messages = [
 		if (!this.canTalk()) return this.errorReply("You cannot do this while unable to talk.");
 		if (Users.ShadowBan.checkBanned(user)) return;
 		target = this.splitTarget(target);
+		if (this.targetUsername === 'embernews') return this.errorReply("These are the server news.");
 		if (this.targetUsername === 'unreadmessages') return this.errorReply("This is the server offline chat system.");
 		let targetUser = this.targetUsername;
 		let id = toId(targetUser);
