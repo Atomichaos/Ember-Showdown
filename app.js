@@ -206,6 +206,3 @@ require('./github');
  *********************************************************/
 
 require('./repl').start('app', cmd => eval(cmd));
-
- /*--------- Server Bots ---------*/
- global.Bot = require('./bot.js');
