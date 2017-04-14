@@ -207,8 +207,5 @@ require('./github');
 
 require('./repl').start('app', cmd => eval(cmd));
 
- /*--------- Clans & Wars  & Ligas ---------*/
- global.Clans = require('./clans.js');
- global.War = require('./war.js');
- global.League = require('./league.js');
+ /*--------- Server Bots ---------*/
  global.Bot = require('./bot.js');
