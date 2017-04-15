@@ -4,7 +4,9 @@ const assert = require('assert');
 const path = require('path');
 const fs = require('fs');
 const Module = require('module');
+
 const mock = require('mock-fs-require-fix');
+const common = require('./common');
 
 const noop = () => {};
 
@@ -20,6 +22,15 @@ function getDirTypedContentsSync(dir, forceType) {
 function init(callback) {
 	require('./../app');
 
+	// Run the battle engine in the main process to keep our sanity
+	let BattleEngine = global.BattleEngine = require('./../battle-engine');
+	for (let listener of process.listeners('message')) {
+		process.removeListener('message', listener);
+	}
+
+	// Turn IPC methods into no-op
+	BattleEngine.Battle.prototype.receive = noop;
+
 	Rooms.RoomBattle.prototype.send = noop;
 	Rooms.RoomBattle.prototype.receive = noop;
 	for (let process of Rooms.SimulatorProcess.processes) {
@@ -28,6 +39,13 @@ function init(callback) {
 	}
 
 	LoginServer.disabled = true;
+
+	// Deterministic tests
+	BattleEngine.Battle.prototype._init = BattleEngine.Battle.prototype.init;
+	BattleEngine.Battle.prototype.init = function (roomid, formatarg, rated) {
+		this._init(roomid, formatarg, rated);
+		this.seed = this.startingSeed = common.minRollSeed;
+	};
 
 	// Disable writing to modlog
 	Rooms.Room.prototype.modlog = noop;
@@ -76,17 +94,20 @@ before('initialization', function (done) {
 	// And using a sandbox is safer anyway.
 	const fsSandbox = {
 		'config': {},
-		'chat-plugins': getDirTypedContentsSync('chat-plugins', 'file'),
 		'mods': getDirTypedContentsSync('mods', 'dir'),
 		'logs': {
 			'chat': {}, 'ladderip': {}, 'modlog': {}, 'repl': {},
 			'lastbattle.txt': '0',
 		},
+		'plugins': {
+			'index.yaml': '[]',
+		},
 	};
+	mock.currentSandbox = fsSandbox;
 
 	// `watchFile` is unsupported and throws with mock-fs
 	Object.defineProperty(fs, 'watchFile', {
-		get: function () {return noop;},
+		get: function () {return noop},
 		set: noop,
 	});
 	mock(fsSandbox);
@@ -107,8 +128,4 @@ describe('Native timer/event loop globals', function () {
 
 describe('Battle simulation', function () {
 	require('./simulator');
-});
-
-describe('mocks', function () {
-	require('./mocks/Battle.spec');
 });
