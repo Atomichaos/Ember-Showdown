@@ -652,46 +652,6 @@ exports.Formats = [
 		searchShow: false,
 		ruleset: ['Pokemon', 'HP Percentage Mod', 'Cancel Mod'],
 	},
-	{
-		name: "[Gen 7] Challenge Cup",
-
-		mod: 'gen7',
-		team: 'randomCC',
-		ruleset: ['Pokemon', 'HP Percentage Mod', 'Cancel Mod'],
-	},
-	{
-		name: "Random Inverse Battle",
-
-		searchShow: false,
-		team: 'random',
-		ruleset: ['Pokemon', 'HP Percentage Mod', 'Sleep Clause Mod', 'Cancel Mod'],
-		onNegateImmunity: function (pokemon, type) {
-			if (type in this.data.TypeChart && this.runEvent('Immunity', pokemon, null, null, type)) return false;
-		},
-		onEffectiveness: function (typeMod, target, type, move) {
-			// The effectiveness of Freeze Dry on Water isn't reverted
-			if (move && move.id === 'freezedry' && type === 'Water') return;
-			if (move && !this.getImmunity(move, type)) return 1;
-			return -typeMod;
-		},
-	},
-	{
-		name: "Random Haxmons",
-
-		searchShow: false,
-		team: 'random',
-		ruleset: ['Pokemon', 'HP Percentage Mod', 'Sleep Clause Mod', 'Freeze Clause', 'Cancel Mod'],
-		onModifyMovePriority: -100,
-		onModifyMove: function (move) {
-			if (move.accuracy !== true && move.accuracy < 100) move.accuracy = 0;
-			move.willCrit = true;
-			if (move.secondaries) {
-				for (let i = 0; i < move.secondaries.length; i++) {
-					move.secondaries[i].chance = 100;
-				}
-			}
-		},
-	},
 	
 	// Ember Metagames
 	///////////////////////////////////////////////////////////////////
