@@ -40,17 +40,15 @@ function isMoney(money) {
 }
 
 let shop = [
-	['Avatar', 'Buys an custom avatar to be applied to your name (You supply. Images larger than 80x80 may not show correctly).', 5],
-	['League Room', 'Purchases a room for league usage.', 5],
-	['Symbol', 'Buys a custom symbol to go infront of name and puts you at top of userlist. (Temporary until restart, certain symbols are blocked)', 5],
-	['Fix', 'Buys the ability to alter your current custom avatar or trainer card.', 5],
 	['Custom Title', 'Buys a title to be added on your /profile.', 10],
-	['Profile Team', 'Allows you to choose which Pokemon you want to be displayed on your /profile. (can be denied)', 20],
-	['Icon', 'Buy a custom icon that can be applied to the rooms you want. You must take into account that the provided image should be 32 x 32', 25],
+	['Symbol', 'Buys a custom symbol to go infront of name and puts you at top of userlist. (Temporary until restart, certain symbols are blocked)', 10],
+	['League Room', 'Purchases a room for league usage.', 15],
+	['Icon', 'Buy a custom icon that can be applied to the rooms you want. You must take into account that the provided image should be 32 x 32', 20],
 	['Custom Color', 'Changes the color of your name (can be denied)', 25],
-	['Room', 'Buys a chatroom for you to own. (within reason, can be refused).', 30],
-	['Trainer Card', 'Buys a trainer card which shows information through a command. (You supply, can be refused)', 40],
-	['Roomshop', 'Buys a Roomshop for your League or Room. Will be removed if abused.', 50],
+	['Trainer Card', 'Buys a trainer card which shows information through a command. (You supply, can be refused)', 25],
+        ['Avatar', 'Buys an custom avatar to be applied to your name (You supply. Images larger than 80x80 may not show correctly).', 30],
+	['Roomshop', 'Buys a Roomshop for your League or Room. Will be removed if abused.', 35],
+	['Room', 'Buys a chatroom for you to own. (within reason, can be refused).', 50],
 ];
 
 let shopDisplay = getShopDisplay(shop);
