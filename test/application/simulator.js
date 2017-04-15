@@ -1,9 +1,8 @@
 'use strict';
 
 const assert = require('assert');
-
-const {matchmaker} = require('../../ladders-matchmaker');
-const {User} = require('./../../dev-tools/users-utils');
+let userUtils = require('./../../dev-tools/users-utils');
+let User = userUtils.User;
 
 describe('Simulator abstraction layer features', function () {
 	describe('Battle', function () {
@@ -18,7 +17,7 @@ describe('Simulator abstraction layer features', function () {
 					p2.disconnectAll();
 					p2.destroy();
 				}
-				if (room) room.destroy();
+				if (room) room.expire();
 			});
 
 			it('should not get players out of sync in rated battles on rename', function () {
@@ -27,7 +26,7 @@ describe('Simulator abstraction layer features', function () {
 				p1 = new User();
 				p2 = new User();
 				p1.forceRename("Missingno."); // Don't do this at home
-				room = matchmaker.startBattle(p1, p2, '', packedTeam, packedTeam, {rated: true});
+				room = Rooms.global.startBattle(p1, p2, '', packedTeam, packedTeam, {rated: true});
 				p1.resetName();
 				for (let i = 0; i < room.battle.playerNames.length; i++) {
 					let playerName = room.battle.playerNames[i];
