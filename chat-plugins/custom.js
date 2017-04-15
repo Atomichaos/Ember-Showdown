@@ -1,3 +1,5 @@
+'use strict';
+
 exports.commands = {
 serverrules: 'emberrules',
 	emberrules: function (target, room, user) {
