@@ -100,6 +100,35 @@ exports.commands = {
 	},
 	seenhelp: ["/seen - Shows when the user last connected on the server."],
 	
+	regdate: function (target, room, user, connection) {
+		if (!target) target = user.name;
+		target = toId(target);
+		if (target.length < 1 || target.length > 19) {
+			return this.sendReply("Usernames can not be less than one character or longer than 19 characters. (Current length: " + target.length + ".)");
+		}
+		if (!this.runBroadcast()) return;
+		EM.regdate(target, date => {
+			if (date) {
+				this.sendReplyBox(regdateReply(date));
+			}
+		});
+
+		function regdateReply(date) {
+			if (date === 0) {
+				return EM.nameColor(target, true) + " <b><font color='red'>is not registered.</font></b>";
+			} else {
+				let d = new Date(date);
+				let MonthNames = ["January", "February", "March", "April", "May", "June",
+					"July", "August", "September", "October", "November", "December",
+				];
+				let DayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+				return EM.nameColor(target, true) + " was registered on <b>" + DayNames[d.getUTCDay()] + ", " + MonthNames[d.getUTCMonth()] + ' ' + d.getUTCDate() + ", " + d.getUTCFullYear() + "</b> at <b>" + d.getUTCHours() + ":" + d.getUTCMinutes() + ":" + d.getUTCSeconds() + " UTC.</b>";
+			}
+			//room.update();
+		}
+	},
+	regdatehelp: ["/regdate - Gets the regdate (register date) of a username."],
+	
 	hide: 'hideauth',
 	hideauth: function (target, room, user) {
 		if (!user.can('lock')) return this.sendReply("/hideauth - Access Denied.");
