@@ -887,14 +887,10 @@ class Tournament {
 		}));
 		this.isEnded = true;
 		if (this.autoDisqualifyTimer) clearTimeout(this.autoDisqualifyTimer);
-						// Tournament Winnings
+		// Tournament Winnings
 		//
-		let color = '#BB6007';
+		let color = '#088cc7';
 		let sizeRequiredToEarn = 2;
-		let currencyName = function (amount) {
-			let name = " PD";
-			return amount === 1 ? name : name + "s";
-		};
 		let data = this.generator.getResults().map(usersToNames).toString();
 		let winner, runnerUp;
 
@@ -909,17 +905,32 @@ class Tournament {
 		let wid = toId(winner);
 		let rid = toId(runnerUp);
 		let tourSize = this.generator.users.size;
+		
+			Economy.writeMoney(wid, firstMoney, () => {
+				Economy.readMoney(wid, newAmount => {
+					if (Users(wid) && Users(wid).connected) {
+						Users.get(wid).popup('|html|You have received ' + firstMoney + ' ' + (firstMoney === 1 ? global.moneyName : global.moneyPlural) + ' from winning the tournament.');
+					}
+					Economy.logTransaction(Chat.escapeHTML(winner) + ' has won ' + firstMoney + ' ' + (firstMoney === 1 ? global.moneyName : global.moneyPlural) + ' from a tournament.');
+				});
+			});
+			this.room.addRaw("<b><font color='" + color + "'>" + Chat.escapeHTML(winner) + "</font> has won " + "<font color='" + color + "'>" + firstMoney + " </font>" + (firstMoney === 1 ? global.moneyName : global.moneyPlural) + " for winning the tournament!</b>");
 
-		if (this.room.isOfficial && tourSize >= sizeRequiredToEarn) {
-			let firstMoney = Math.round(tourSize * 20);
-			let secondMoney = Math.round(firstMoney / 2)
-
-			Db('money').set(wid, Db('money').get(wid, 0) + firstMoney);
-			this.room.addRaw("<b><font color='" + EM.Color(winner) + "'>" + Chat.escapeHTML(winner) + "</font> Has won " + "<font color='" + color + "'>" + firstMoney + "</font>" + currencyName(firstMoney) + " for winning the tournament!</b>");
+			if ((tourSize >= 2) && this.room.isOfficial) {
+				let tourRarity = tourCard(tourSize, toId(winner));
+				this.room.addRaw("<b><font color='" + EM.Color(winner) + "'>" + Chat.escapeHTML(winner) + "</font> has also won a <font color=" + tourRarity[0] + ">" + tourRarity[1] + "</font> card: <button class='tourcard-btn' style='border-radius: 20px; box-shadow: 1px 1px rgba(255, 255, 255, 0.3) inset, -1px -1px rgba(0, 0, 0, 0.2) inset, 2px 2px 2px rgba(0, 0, 0, 0.5);' name='send' value='/card " + tourRarity[2] + "'>" + tourRarity[3] + "</button> from the tournament.");
+			}
 
 			if (runnerUp) {
-				Db('money').set(rid, Db('money').get(rid, 0) + secondMoney);
-				this.room.addRaw("<b><font color='" + EM.Color(runnerUp) + "'>" + Chat.escapeHTML(runnerUp) + "</font> Has won " +  "<font color='" + color + "'>" + + secondMoney + "</font>" + currencyName(secondMoney) + " for getting second place!</b>");
+				Economy.writeMoney(rid, secondMoney, () => {
+					Economy.readMoney(rid, newAmount => {
+						if (Users(rid) && Users(rid).connected) {
+							Users.get(rid).popup('|html|You have received ' + secondMoney + ' ' + (secondMoney === 1 ? global.moneyName : global.moneyPlural) + ' from winning the tournament.');
+						}
+						Economy.logTransaction(Chat.escapeHTML(runnerUp) + ' has won ' + secondMoney + ' ' + (secondMoney === 1 ? global.moneyName : global.moneyPlural) + ' from a tournament.');
+					});
+				});
+				this.room.addRaw("<b><font color='" + color + "'>" + Chat.escapeHTML(runnerUp) + "</font> has won " + "<font color='" + color + "'> " + secondMoney + "</font>" + (firstMoney === 1 ? global.moneyName : global.moneyPlural) + " for winning the tournament!</b>");
 			}
 		}
 		delete exports.tournaments[this.room.id];
