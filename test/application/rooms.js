@@ -2,8 +2,8 @@
 
 const assert = require('assert');
 
-const {matchmaker, Matchmaker} = require('../../ladders-matchmaker');
-const {User} = require('../../dev-tools/users-utils');
+let userUtils = require('./../../dev-tools/users-utils');
+let User = userUtils.User;
 
 describe('Rooms features', function () {
 	describe('Rooms', function () {
@@ -27,21 +27,8 @@ describe('Rooms features', function () {
 		const packedTeam = 'Weavile||lifeorb||swordsdance,knockoff,iceshard,iciclecrash|Jolly|,252,,,4,252|||||';
 
 		let room;
-		before(function () {
-			matchmaker.ladderIpLog.end();
-			clearInterval(matchmaker.periodicMatchInterval);
-			matchmaker.periodicMatchInterval = null;
-		});
 		afterEach(function () {
-			Users.users.forEach(user => {
-				room.onLeave(user);
-				user.disconnectAll();
-				user.destroy();
-			});
-			if (room) room.destroy();
-		});
-		after(function () {
-			Object.assign(matchmaker, new Matchmaker());
+			if (room) room.expire();
 		});
 
 		it('should allow two users to join the battle', function () {
@@ -49,7 +36,7 @@ describe('Rooms features', function () {
 			let p2 = new User();
 			let options = [{rated: false, tour: false}, {rated: false, tour: {onBattleWin() {}}}, {rated: true, tour: false}, {rated: true, tour: {onBattleWin() {}}}];
 			for (let option of options) {
-				room = matchmaker.startBattle(p1, p2, 'customgame', packedTeam, packedTeam, option);
+				room = Rooms.global.startBattle(p1, p2, 'customgame', packedTeam, packedTeam, option);
 				assert.ok(room.battle.p1 && room.battle.p2); // Automatically joined
 			}
 		});
@@ -67,7 +54,7 @@ describe('Rooms features', function () {
 					}},
 				},
 			};
-			room = matchmaker.startBattle(p1, p2, 'customgame', packedTeam, packedTeam, options);
+			room = Rooms.global.startBattle(p1, p2, 'customgame', packedTeam, packedTeam, options);
 			assert.strictEqual(room.getAuth(new User()), '%');
 		});
 
@@ -89,14 +76,18 @@ describe('Rooms features', function () {
 					}},
 				},
 			};
-			room = matchmaker.startBattle(p1, p2, 'customgame', packedTeam, packedTeam, options);
-			roomStaff.joinRoom(room);
+			room = Rooms.global.startBattle(p1, p2, 'customgame', packedTeam, packedTeam, options);
 			administrator.joinRoom(room);
 			assert.strictEqual(room.getAuth(roomStaff), '%', 'before promotion attempt');
 			Chat.parse("/roomvoice Room auth", room, p1, p1.connections[0]);
 			assert.strictEqual(room.getAuth(roomStaff), '%', 'after promotion attempt');
 			Chat.parse("/roomvoice Room auth", room, administrator, administrator.connections[0]);
 			assert.strictEqual(room.getAuth(roomStaff), '+', 'after being promoted by an administrator');
+
+			for (const user of [roomStaff, administrator]) {
+				user.disconnectAll();
+				user.destroy();
+			}
 		});
 	});
 });
