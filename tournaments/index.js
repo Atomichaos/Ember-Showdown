@@ -906,6 +906,17 @@ class Tournament {
 		let rid = toId(runnerUp);
 		let tourSize = this.generator.users.size;
 		
+		if ((tourSize >= sizeRequiredToEarn) && this.room.isOfficial) {
+			let firstMoney = Math.round(tourSize / 2);
+			if (firstMoney < 2) firstMoney = 2;
+			if (Users(wid).tourBoost) firstMoney *= 2;
+			if (Users(wid).gameBoost) firstMoney *= 2;
+			let secondMoney = Math.round(firstMoney / 2);
+			if (runnerUp) {
+				if (Users(rid).tourBoost) secondMoney *= 2;
+				if (Users(rid).gameBoost) secondMoney *= 2;
+			}
+		
 			Economy.writeMoney(wid, firstMoney, () => {
 				Economy.readMoney(wid, newAmount => {
 					if (Users(wid) && Users(wid).connected) {
