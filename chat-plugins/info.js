@@ -1093,13 +1093,16 @@ exports.commands = {
 		this.sendReplyBox(
 			(showRoom ? `<strong>Room ranks</strong><br />` +
 			`+ <strong>Voice</strong> - They can use ! commands like !groups, and talk during moderated chat<br />` +
+			`$ <strong>Operator</strong> - The above, and they can create and manage tournaments<br />` +
 			`% <strong>Driver</strong> - The above, and they can mute and warn<br />` +
 			`@ <strong>Moderator</strong> - The above, and they can room ban users<br />` +
 			`* <strong>Bot</strong> - Like Moderator, but makes it clear that this user is a bot<br />` +
+			`&amp; <strong>Leader</strong> - The above, and they can promote to moderator and manage the room<br />` +
 			`# <strong>Room Owner</strong> - They are leaders of the room and can almost totally control it<br />` : ``) +
 			(showRoom && showGlobal ? `<br />` : ``) +
 			(showGlobal ? `<strong>Global ranks</strong><br />` +
 			`+ <strong>Global Voice</strong> - They can use ! commands like !groups, and talk during moderated chat<br />` +
+			`$ <strong>Global Operator</strong> - The above, and they can create and manage tournaments<br />` +
 			`% <strong>Global Driver</strong> - The above, and they can also lock users and check for alts<br />` +
 			`@ <strong>Global Moderator</strong> - The above, and they can globally ban users<br />` +
 			`* <strong>Global Bot</strong> - Like Moderator, but makes it clear that this user is a bot<br />` +
@@ -1268,6 +1271,17 @@ exports.commands = {
 			"Example replays:<br />" +
 			"- <a href=\"https://replay.pokemonshowdown.com/gennextou-120689854\">Zergo vs Mr Weegle Snarf</a><br />" +
 			"- <a href=\"https://replay.pokemonshowdown.com/gennextou-130756055\">NickMP vs Khalogie</a>"
+		);
+	},
+	
+	'!embermono': true,
+	embermonotype: 'embermono',
+	embermono: function (target, room, user) {
+		if (!this.runBroadcast()) return;
+		this.sendReplyBox(
+			"A tier to enjoy monotype with your favorite Pok&eacute;mon!(special thanks to Fleur Fee)<br />" +
+			"- <a href=\"https://docs.google.com/spreadsheets/d/1cWrH1yIQshJP5CSmZe5Ey0nOgk0phKeGSv-9U65budA/htmlview\">Ember Monotype Spreadsheet</a><br />" +
+			"- <a href=\"https://www.smogon.com/forums/threads/3589809/\">Monotype Viability Ranking</a><br />"
 		);
 	},
 
