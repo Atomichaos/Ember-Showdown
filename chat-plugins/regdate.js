@@ -35,3 +35,15 @@ EM.regdate = function (target, callback) {
 		});
 	});
 };
+
+// last two functions needed to make sure EM.regdate() fully works
+function loadRegdateCache() {
+	try {
+		regdateCache = JSON.parse(fs.readFileSync('config/regdate.json', 'utf8'));
+	} catch (e) {}
+}
+loadRegdateCache();
+
+function saveRegdateCache() {
+	fs.writeFileSync('config/regdate.json', JSON.stringify(regdateCache));
+}
