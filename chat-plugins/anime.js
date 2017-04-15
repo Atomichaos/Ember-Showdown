@@ -84,5 +84,4 @@ exports.commands = {
 			return this.errorReply("Anime not found.");
 		});
 	},
-
 };
