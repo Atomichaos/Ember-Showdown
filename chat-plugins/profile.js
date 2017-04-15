@@ -15,7 +15,7 @@ let serverIp = Config.serverIp;
 function isVIP(user) {
 	if (!user) return;
 	if (typeof user === 'object') user = user.userid;
-	let vip = Db.vips.get(toId(user));
+	let vip = Db('vips').get(toId(user));
 	if (vip === 1) return true;
 	return false;
 }
@@ -23,16 +23,16 @@ function isVIP(user) {
 function isDev(user) {
 	if (!user) return;
 	if (typeof user === 'object') user = user.userid;
-	let dev = Db.devs.get(toId(user));
-	if (dev === 1) return true;
+	let dev = Db('devs').get(toId(user));
+	if (dev === e1) return true;
 	return false;
 }
 
 function showTitle(userid) {
 	userid = toId(userid);
-	if (Db.customtitles.has(userid)) {
-		return '<font color="' + Db.customtitles.get(userid)[1] +
-			'">(<b>' + Db.customtitles.get(userid)[0] + '</b>)</font>';
+	if (Db('customtitles').has(userid)) {
+		return '<font color="' + Db('customtitles').get(userid)[1] +
+			'">(<b>' + Db('customtitles').get(userid)[0] + '</b>)</font>';
 	}
 	return '';
 }
@@ -48,8 +48,8 @@ function vipCheck(user) {
 }
 
 function showBadges(user) {
-	if (Db.userBadges.has(toId(user))) {
-		let badges = Db.userBadges.get(toId(user));
+	if (Db('userBadges').has(toId(user))) {
+		let badges = Db('userBadges').get(toId(user));
 		let css = 'border:none;background:none;padding:0;';
 		if (typeof badges !== 'undefined' && badges !== null) {
 			let output = '<td><div style="float: right; background: rgba(69, 76, 80, 0.4); text-align: center; border-radius: 12px; box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.2) inset; margin: 0px 3px;">';
@@ -57,7 +57,7 @@ function showBadges(user) {
 			for (let i = 0; i < badges.length; i++) {
 				if (i !== 0 && i % 4 === 0) output += '</tr> <tr>';
 				output += '<td><button style="' + css + '" name="send" value="/badges info, ' + badges[i] + '">' +
-				'<img src="' + Db.badgeData.get(badges[i])[1] + '" height="16" width="16" alt="' + badges[i] + '" title="' + badges[i] + '" >' + '</button></td>';
+				'<img src="' + Db('badgeData').get(badges[i])[1] + '" height="16" width="16" alt="' + badges[i] + '" title="' + badges[i] + '" >' + '</button></td>';
 			}
 			output += '</tr> </table></div></td>';
 			return output;
@@ -74,7 +74,7 @@ exports.commands = {
 			let vipUsername = toId(target);
 			if (vipUsername.length > 18) return this.errorReply("Usernames cannot exceed 18 characters.");
 			if (isVIP(vipUsername)) return this.errorReply(vipUsername + " is already a VIP user.");
-			Db.vips.set(vipUsername, 1);
+			Db('vips').set(vipUsername, 1);
 			this.sendReply("|html|" + EM.nameColor(vipUsername, true) + " has been given VIP status.");
 			if (Users.get(vipUsername)) Users(vipUsername).popup("|html|You have been given VIP status by " + EM.nameColor(user.name, true) + ".");
 		},
@@ -84,15 +84,15 @@ exports.commands = {
 			let vipUsername = toId(target);
 			if (vipUsername.length > 18) return this.errorReply("Usernames cannot exceed 18 characters.");
 			if (!isVIP(vipUsername)) return this.errorReply(vipUsername + " isn't a VIP user.");
-			Db.vips.remove(vipUsername);
+			Db('vips').delete(vipUsername);
 			this.sendReply("|html|" + EM.nameColor(vipUsername, true) + " has been demoted from VIP status.");
 			if (Users.get(vipUsername)) Users(vipUsername).popup("|html|You have been demoted from VIP status by " + EM.nameColor(user.name, true) + ".");
 		},
 		users: 'list',
 		list: function (target, room, user) {
-			if (!Db.vips.keys().length) return this.errorReply('There seems to be no user with VIP status.');
+			if (!Db('vips').keys().length) return this.errorReply('There seems to be no user with VIP status.');
 			let display = [];
-			Db.vips.keys().forEach(vipUser => {
+			Db('vips').keys().forEach(vipUser => {
 				display.push(EM.nameColor(vipUser, (Users(vipUser) && Users(vipUser).connected)));
 			});
 			this.popupReply('|html|<b><u><font size="3"><center>VIP Users:</center></font></u></b>' + display.join(','));
@@ -119,7 +119,7 @@ exports.commands = {
 			let devUsername = toId(target);
 			if (devUsername.length > 18) return this.errorReply("Usernames cannot exceed 18 characters.");
 			if (isDev(devUsername)) return this.errorReply(devUsername + " is already a DEV user.");
-			Db.devs.set(devUsername, 1);
+			Db('devs').set(devUsername, 1);
 			this.sendReply('|html|' + EM.nameColor(devUsername, true) + " has been given DEV status.");
 			if (Users.get(devUsername)) Users(devUsername).popup("|html|You have been given DEV status by " + EM.nameColor(user.name, true) + ".");
 		},
@@ -129,15 +129,15 @@ exports.commands = {
 			let devUsername = toId(target);
 			if (devUsername.length > 18) return this.errorReply("Usernames cannot exceed 18 characters.");
 			if (!isDev(devUsername)) return this.errorReply(devUsername + " isn't a DEV user.");
-			Db.devs.remove(devUsername);
+			Db('devs').delete(devUsername);
 			this.sendReply("|html|" + EM.nameColor(devUsername, true) + " has been demoted from DEV status.");
 			if (Users.get(devUsername)) Users(devUsername).popup("|html|You have been demoted from DEV status by " + EM.nameColor(user.name, true) + ".");
 		},
 		users: 'list',
 		list: function (target, room, user) {
-			if (!Db.devs.keys().length) return this.errorReply('There seems to be no user with DEV status.');
+			if (!Db('devs').keys().length) return this.errorReply('There seems to be no user with DEV status.');
 			let display = [];
-			Db.devs.keys().forEach(devUser => {
+			Db('devs').keys().forEach(devUser => {
 				display.push(EM.nameColor(devUser, (Users(devUser) && Users(devUser).connected)));
 			});
 			this.popupReply('|html|<b><u><font size="3"><center>DEV Users:</center></font></u></b>' + display.join(','));
@@ -167,12 +167,12 @@ exports.commands = {
 			let userid = toId(target[0]);
 			let targetUser = Users.getExact(userid);
 			let title = target[1].trim();
-			if (Db.customtitles.has(userid) && Db.titlecolors.has(userid)) {
+			if (Db('customtitles').has(userid) && Db('titlecolors').has(userid)) {
 				return this.errorReply(userid + " already has a custom title.");
 			}
 			let color = target[2].trim();
 			if (color.charAt(0) !== '#') return this.errorReply("The color needs to be a hex starting with '#'.");
-			Db.customtitles.set(userid, [title, color]);
+			Db('customtitles').set(userid, [title, color]);
 			if (Users.get(targetUser)) {
 				Users(targetUser).popup(
 					'|html|You have recieved a custom title from ' + EM.nameColor(user.name, true) + '.' +
@@ -188,7 +188,7 @@ exports.commands = {
 			if (!this.can('declare')) return false;
 			if (!target) return this.parse('/help', true);
 			let userid = toId(target);
-			if (!Db.customtitles.has(userid) && !Db.titlecolors.has(userid)) {
+			if (!Db('customtitles').has(userid) && !Db('titlecolors').has(userid)) {
 				return this.errorReply(userid + " does not have a custom title set.");
 			}
 			Db.titlecolors.remove(userid);
