@@ -4128,7 +4128,7 @@ exports.BattleAbilities = {
 		name: "Persistent",
 		// implemented in the corresponding move
 		rating: 3.5,
-    num: -4,
+    		num: -4,
 	},
 };
 		
