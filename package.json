@@ -9,6 +9,7 @@
     "elo-rank": "^0.2.2",
     "es6-shim": "0.27.1",
     "geoip-ultralight": "^0.1.2",
+    "geoip-lite-country": "1.1.5",
     "githubhook": "1.7.1",
     "geoip-lite": "1.1.8",
     "lowdb": "^0.12.2",
