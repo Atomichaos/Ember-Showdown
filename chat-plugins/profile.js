@@ -191,8 +191,8 @@ exports.commands = {
 			if (!Db('customtitles').has(userid) && !Db('titlecolors').has(userid)) {
 				return this.errorReply(userid + " does not have a custom title set.");
 			}
-			Db.titlecolors.remove(userid);
-			Db.customtitles.remove(userid);
+			Db('titlecolors').delete(userid);
+			Db('customtitles').delete(userid);
 			if (Users.get(userid)) {
 				Users(userid).popup(
 					'|html|' + EM.nameColor(user.name, true) + " has removed your custom title."
@@ -230,7 +230,7 @@ exports.commands = {
 			}
 			if (fc.length < 12) return this.errorReply("Your friend code needs to be 12 digits long.");
 			fc = fc.slice(0, 4) + '-' + fc.slice(4, 8) + '-' + fc.slice(8, 12);
-			Db.friendcodes.set(toId(user), fc);
+			Db('friendcodes').set(toId(user), fc);
 			return this.sendReply("Your friend code: " + fc + " has been saved to the server.");
 		},
 		remove: 'delete',
@@ -238,14 +238,14 @@ exports.commands = {
 			if (room.battle) return this.errorReply("Please use this command outside of battle rooms.");
 			if (!user.autoconfirmed) return this.errorReply("You must be autoconfirmed to use this command.");
 			if (!target) {
-				if (!Db.friendcodes.has(toId(user))) return this.errorReply("Your friend code isn't set.");
-				Db.friendcodes.remove(toId(user));
+				if (!Db('friendcodes').has(toId(user))) return this.errorReply("Your friend code isn't set.");
+				Db('friendcodes').delete(toId(user));
 				return this.sendReply("Your friend code has been deleted from the server.");
 			} else {
 				if (!this.can('lock')) return false;
 				let userid = toId(target);
-				if (!Db.friendcodes.has(userid)) return this.errorReply(userid + " hasn't set a friend code.");
-				Db.friendcodes.remove(userid);
+				if (!Db('friendcodes').has(userid)) return this.errorReply(userid + " hasn't set a friend code.");
+				Db('friendcodes').delete(userid);
 				return this.sendReply(userid + "'s friend code has been deleted from the server.");
 			}
 		},
@@ -292,7 +292,7 @@ exports.commands = {
 
 		function getLastSeen(userid) {
 			if (Users(userid) && Users(userid).connected) return '<font color = "limegreen"><strong>Currently Online</strong></font>';
-			let seen = Db.seen.get(userid);
+			let seen = Db('seen').get(userid);
 			if (!seen) return '<font color = "red"><strong>Never</strong></font>';
 			return Chat.toDurationString(Date.now() - seen, {precision: true}) + " ago.";
 		}
@@ -311,10 +311,10 @@ exports.commands = {
 				profile += '&nbsp;<font color="#24678d"><b>Name:</b></font> ' + EM.nameColor(username, true) + '&nbsp;' + getFlag(toId(username)) + ' ' + showTitle(username) + '<br />';
 				profile += '&nbsp;<font color="#24678d"><b>Group:</b></font> ' + userGroup + ' ' + devCheck(username) + vipCheck(username) + '<br />';
 				profile += '&nbsp;<font color="#24678d"><b>Registered:</b></font> ' + regdate + '<br />';
-				profile += '&nbsp;<font color="#24678d"><b>' + global.currencyPlural + ':</b></font> ' + currency + '<br />';
+				profile += '&nbsp;<font color="#24678d"><b>' + global.moneyPlural + ':</b></font> ' + currency + '<br />';
 				profile += '&nbsp;<font color="#24678d"><b>Last Seen:</b></font> ' + getLastSeen(toId(username)) + '</font><br />';
-				if (Db.friendcodes.has(toId(username))) {
-					profile += '&nbsp;<div style="display:inline-block;height:5px;width:80px;"></div><font color="#24678d"><b>Friend Code:</b></font> ' + Db.friendcodes.get(toId(username));
+				if (Db('friendcodes').has(toId(username))) {
+					profile += '&nbsp;<div style="display:inline-block;height:5px;width:80px;"></div><font color="#24678d"><b>Friend Code:</b></font> ' + Db('friendcodes').get(toId(username));
 				}
 				profile += '<br clear="all">';
 				self.sendReplyBox(profile);
