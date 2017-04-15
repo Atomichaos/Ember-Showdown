@@ -9,14 +9,6 @@ let amCache = {
 	manga: {},
 };
 
-function isDev(user) {
-	if (!user) return;
-	if (typeof user === 'object') user = user.userid;
-	let dev = Db('devs').get(toId(user));
-	if (dev === 1) return true;
-	return false;
-}
-
 exports.commands = {
 	anime: function (target, room, user) {
 		if (!this.runBroadcast()) return;
@@ -92,49 +84,5 @@ exports.commands = {
 			return this.errorReply("Anime not found.");
 		});
 	},
-	dev: {
-		give: function (target, room, user) {
-			if (!this.can('declare')) return false;
-			if (!target) return this.parse('/help', true);
-			let devUsername = toId(target);
-			if (devUsername.length > 18) return this.errorReply("Usernames cannot exceed 18 characters.");
-			if (isDev(devUsername)) return this.errorReply(devUsername + " is already a DEV user.");
-			Db('devs').set(devUsername, 1);
-			this.sendReply('|html|' + EM.nameColor(devUsername, true) + " has been given DEV status.");
-			if (Users.get(devUsername)) Users(devUsername).popup("|html|You have been given DEV status by " + EM.nameColor(user.name, true) + ".");
-		},
-		take: function (target, room, user) {
-			if (!this.can('declare')) return false;
-			if (!target) return this.parse('/help', true);
-			let devUsername = toId(target);
-			if (devUsername.length > 18) return this.errorReply("Usernames cannot exceed 18 characters.");
-			if (!isDev(devUsername)) return this.errorReply(devUsername + " isn't a DEV user.");
-			Db('devs').delete(devUsername);
-			this.sendReply("|html|" + EM.nameColor(devUsername, true) + " has been demoted from DEV status.");
-			if (Users.get(devUsername)) Users(devUsername).popup("|html|You have been demoted from DEV status by " + EM.nameColor(user.name, true) + ".");
-		},
-		users: 'list',
-		list: function (target, room, user) {
-			if (!Db('devs').keys().length) return this.errorReply('There seems to be no user with DEV status.');
-			let display = [];
-			Db('devs').keys().forEach(devUser => {
-				display.push(EM.nameColor(devUser, (Users(devUser) && Users(devUser).connected)));
-			});
-			this.popupReply('|html|<b><u><font size="3"><center>DEV Users:</center></font></u></b>' + display.join(','));
-		},
-		'': 'help',
-		help: function (target, room, user) {
-			this.sendReplyBox(
-				'<div style="padding: 3px 5px;"><center>' +
-				'<code>/dev</code> commands.<br />These commands are nestled under the namespace <code>dev</code>.</center>' +
-				'<hr width="100%">' +
-				'<code>give [username]</code>: Gives <code>username</code> DEV status. Requires: & ~' +
-				'<br />' +
-				'<code>take [username]</code>: Takes <code>username</code>\'s DEV status. Requires: & ~' +
-				'<br />' +
-				'<code>list</code>: Shows list of users with DEV Status' +
-				'</div>'
-			);
-		},
-	},
+
 };
