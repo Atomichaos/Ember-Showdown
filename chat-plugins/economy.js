@@ -44,7 +44,7 @@ let shop = [
 	['Symbol', 'Buys a custom symbol to go infront of name and puts you at top of userlist. (Temporary until restart, certain symbols are blocked)', 10],
 	['League Room', 'Purchases a room for league usage.', 15],
 	['Icon', 'Buy a custom icon that can be applied to the rooms you want. You must take into account that the provided image should be 32 x 32', 20],
-	['Custom Color', 'Changes the color of your name (can be denied)', 25],
+	['Custom Color', 'Changes the color of your name (can be denied if name is too bright)', 25],
 	['Trainer Card', 'Buys a trainer card which shows information through a command. (You supply, can be refused)', 25],
         ['Avatar', 'Buys an custom avatar to be applied to your name (You supply. Images larger than 80x80 may not show correctly).', 30],
 	['Roomshop', 'Buys a Roomshop for your League or Room. Will be removed if abused.', 35],
